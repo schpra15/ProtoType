@@ -7,14 +7,25 @@
 print "turet.lua initialized"
 
 Turet = {} -- Define the turet utility object
+Turet.classes = {"Fighter", "Mage", "Tank", "Support"}
 
-function Turet:newTuret(x, y)
-  local turet = display.newRect( x, y, 32, 32 )
+function Turet:newTuret(type, x, y)
 
+  local turet = nil
+  if (type == "friend") then
+    turet = display.newImage("friends.png", x, y)
+  else
+    turet = display.newImage("enemies.png", x, y)
+  end
+
+  --[[
+    Initializes the turet.
+  ]]--
   function turet:construct()
     -- Define the turet's stats
     turet.name = "Bob"
-    turet.type = "Tank"
+    turet.type = type
+    turet.class = "Tank"
     turet.HP = 0
     turet.damage = 10
     turet.armor = 10
@@ -25,40 +36,50 @@ function Turet:newTuret(x, y)
 
     turet.isDragging = false;
     -- Add this as a physics body
-    physics.addBody( turet )
+    physics.addBody( turet, "dynamic", { density=1.0, friction=0, bounce=0.0 })
 
     -- Add the event listeners
-    turet:addEventListener( "touch", onTouch )
+    if (turet.type == "friend") then
+      turet:addEventListener( "touch", onTouch )
+    end
 
     turet:printStats()
   end
 
-  function onTap( event )
-    print("You tapped "..turet.name)
-    turet:applyForce( 0.1, 0.1, event.x - turet.x, event.y - turet.y)
-    return true
-  end
-
+  --[[
+    Handles when a turet is touched.
+  ]]--
   function onTouch( event )
     if ( event.phase == "began" ) then
       --code executed when the button is touched
+      display.getCurrentStage():setFocus( turet, event.id )
       print( "object touched = "..tostring(event.target) )  --'event.target' is the touched object
       turet.isDragging = true
       turet.markX = turet.x
       turet.markY = turet.y
-      turet.gravityScale = 0
-      turet:setLinearVelocity(0,0)
-      turet:scale(2,2)
+      physics.removeBody(turet)
+      transition.to( turet, { time=200, xScale = 2, yScale = 2 })
     elseif ( event.phase == "moved" ) then
+
+      -- handle the case where the event starts as "moved" (when dragging a new turet)
+      if (turet.markX == nil) then
+          display.getCurrentStage():setFocus( turet, event.id )
+          turet.markX = turet.x
+          turet.markY = turet.y
+          turet.isDragging = true
+          physics.removeBody(turet)
+          transition.to( turet, { time=200, xScale = 2, yScale = 2 })
+      end
       --code executed when the touch is moved over the object
       turet.x = (event.x - event.xStart) + turet.markX
       turet.y = (event.y - event.yStart) + turet.markY
     elseif ( event.phase == "ended" ) then
       --code executed when the touch lifts off the object
+      display.getCurrentStage():setFocus( nil, event.id )
       print( "touch ended on object "..tostring(event.target) )
       turet.isDragging = false
-      turet.gravityScale = 1
-      turet:scale(0.5,0.5)
+      physics.addBody( turet, "dynamic", { density=1.0, friction=0, bounce=0.0 })
+      transition.to( turet, { time=200, xScale = 1, yScale = 1 })
     end
     return true  --prevents touch propagation to underlying objects
   end
@@ -68,7 +89,7 @@ function Turet:newTuret(x, y)
   -- ------------------------------------------------
   function turet:printStats()
     print("Name: "..turet.name)
-    print("Class: "..turet.type)
+    print("Class: "..turet.class)
     print("HP: "..turet.HP)
     print("Damage: "..turet.damage)
     print("Armor: "..turet.armor)
