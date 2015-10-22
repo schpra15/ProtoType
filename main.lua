@@ -1,5 +1,8 @@
 local physics = require( "physics" )
 local native = require( "native" )
+local game = require "classes.game"
+local turet = require "classes.turet"
+
 physics.start()
 
 
