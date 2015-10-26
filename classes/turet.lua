@@ -13,9 +13,9 @@ function Turet:newTuret(type, x, y)
 
   local turet = nil
   if (type == "friend") then
-    turet = display.newImage("friends.png", x, y)
+    turet = display.newImage("images/friends.png", x, y)
   else
-    turet = display.newImage("enemies.png", x, y)
+    turet = display.newImage("images/enemies.png", x, y)
   end
 
   --[[
