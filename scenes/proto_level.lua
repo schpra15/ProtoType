@@ -8,6 +8,8 @@
 ---------------------------------------------------------------------------------
 local composer = require( "composer" )
 
+local allTurets = {}
+
 local scene = composer.newScene()
 
 function scene:create( event )
@@ -43,14 +45,37 @@ function scene:create( event )
 	local frnd = Turet:newTuret("friend", 500, 200)
 	frnd:applyForce(-80, 0, frnd.x, frnd.y)
 	sceneGroup:insert( frnd )
+	table.insert(allTurets, frnd)
 
-	local enemy = Turet:newTuret("enemy", -80, 200)
+	local enemy = Turet:newTuret("enemy", 20, 200)
 	enemy:applyForce(60,0,enemy.x,enemy.y)
 	sceneGroup:insert( enemy )
+	table.insert(allTurets, enemy)
 
 	-- local enemy1 = Turet:newTuret("enemy", -30, 200)
 	-- enemy1:applyForce(1,0,enemy1.x,enemy1.y)
 	-- sceneGroup:insert( enemy1 )
+
+	function enterFrame(event)
+		for i=1, #allTurets do
+			local turetA = allTurets[i]
+			print(turetA.type)
+			for j=1, #allTurets do
+				if (i ~= j) then
+					local turetB = allTurets[j]
+					print(turetB.type)
+					if (math.abs(turetA.x - turetB.x) < 100) then
+						--stop the Turets
+						turetA:setLinearVelocity(0,0)
+						turetB:setLinearVelocity(0,0)
+						break
+					end
+				end
+			end
+		end
+	end
+
+	Runtime:addEventListener("enterFrame", enterFrame)
 
 	local gui = GuiControls:newGuiTuretMenu()
 	sceneGroup:insert( gui )
