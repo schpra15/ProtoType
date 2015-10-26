@@ -40,15 +40,6 @@ function scene:create( event )
 	physics.addBody(floor3, "static", { density=0.0, friction=.1, bounce=0.0 })
 	sceneGroup:insert( floor3 )
 
-	local function bulletCollision(self, event)
-		if event.phase == "began" then
-			if event.target.type == "enemy" and event.other.type == "friend" then
-				display.remove(self)
-				print("wow")
-			end
-		end
-	end
-
 	local frnd = Turet:newTuret("friend", 500, 200)
 	frnd:applyForce(-80, 0, frnd.x, frnd.y)
 	sceneGroup:insert( frnd )
@@ -57,12 +48,39 @@ function scene:create( event )
 	enemy:applyForce(60,0,enemy.x,enemy.y)
 	sceneGroup:insert( enemy )
 
-	local enemy1 = Turet:newTuret("enemy", -30, 200)
-	enemy1:applyForce(1,0,enemy1.x,enemy1.y)
-	sceneGroup:insert( enemy1 )
+	-- local enemy1 = Turet:newTuret("enemy", -30, 200)
+	-- enemy1:applyForce(1,0,enemy1.x,enemy1.y)
+	-- sceneGroup:insert( enemy1 )
 
 	local gui = GuiControls:newGuiTuretMenu()
 	sceneGroup:insert( gui )
+
+	function bulletAppear()
+		local bullet = display.newRect(0, 0, 16, 8)
+		bullet.x= (enemy.x+10)
+		bullet.y= (enemy.y-20)
+		bullet.type = "enemy"
+		bullet.collision = bulletCollision
+		bullet:addEventListener("collision", bullet)
+		physics.addBody(bullet, "dynamic", { density=1.0, friction=1, bounce=0.0 })
+		bullet:applyForce(50,-15,bullet.x,bullet.y)
+	end
+
+	function bulletCollision(self, event)
+		if event.phase=="began" then
+			if event.target.type=="enemy" and event.other.type=="friend" then
+				display.remove(self)
+				event.other.HP = event.other.HP - 20
+				print(event.other.HP)
+				event.other:updateDamageBar()
+				if (event.other.checkDead()) then
+					display.remove(event.other)
+				end
+			end
+		end
+	end
+
+	timer.performWithDelay(1000, bulletAppear, -1)
 
 	-- all objects must be added to group (e.g. self.view)
 	-- sceneGroup:insert( bg )

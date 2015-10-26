@@ -11,11 +11,13 @@ Turet.classes = {"Fighter", "Mage", "Tank", "Support"}
 
 function Turet:newTuret(type, x, y)
 
-  local turet = nil
+  local turet = display.newGroup()
+  turet.x = x
+  turet.y = y
   if (type == "friend") then
-    turet = display.newImage("images/friends.png", x, y)
+    display.newImage(turet, "images/friends.png", 0, 0)
   else
-    turet = display.newImage("images/enemies.png", x, y)
+    display.newImage(turet, "images/enemies.png", 0, 0)
   end
 
   --[[
@@ -26,7 +28,8 @@ function Turet:newTuret(type, x, y)
     turet.name = "Bob"
     turet.type = type
     turet.class = "Tank"
-    turet.HP = 0
+    turet.HP = 100
+    turet.HPMax = 100
     turet.damage = 10
     turet.armor = 10
     turet.stamina = 100
@@ -42,6 +45,19 @@ function Turet:newTuret(type, x, y)
     if (turet.type == "friend") then
       turet:addEventListener( "touch", onTouch )
     end
+
+    turet.healthBar = display.newRect(turet, 0,
+                            -30,
+                            turet.HPMax/2,
+                           5)
+
+    turet.healthBar:setFillColor( 000/255, 255/255, 0/255 )
+    turet.healthBar.strokeWidth = 1
+    turet.healthBar:setStrokeColor( 255, 255, 255, .5 )
+
+    turet.damageBar = display.newRect(turet, 0,-30,0,5)
+
+    turet.damageBar:setFillColor( 255/255, 0/255, 0/255 )
 
     turet:printStats()
   end
@@ -97,6 +113,15 @@ function Turet:newTuret(type, x, y)
     print("Deploy $: "..turet.deployCost)
     print("Death Reward $: "..turet.deathReward)
     --print("Ability: "..turet.ability)
+  end
+
+  function turet:updateDamageBar()
+    turet.damageBar.x = turet.HP / 4
+    turet.damageBar.width = (turet.HPMax - turet.HP)/2
+  end
+
+  function turet:checkDead()
+    return (turet.HP <= 0)
   end
 
   turet:construct()
