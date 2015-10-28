@@ -47,6 +47,7 @@ function scene:create( event )
 	sceneGroup:insert( frnd )
 	table.insert(allTurets, frnd)
 
+
 	local enemy = Turet:newTuret("enemy", 20, 200)
 	enemy:applyForce(60,0,enemy.x,enemy.y)
 	sceneGroup:insert( enemy )
@@ -59,17 +60,11 @@ function scene:create( event )
 	function enterFrame(event)
 		for i=1, #allTurets do
 			local turetA = allTurets[i]
-			print(turetA.type)
 			for j=1, #allTurets do
 				if (i ~= j) then
 					local turetB = allTurets[j]
-					print(turetB.type)
-					if (math.abs(turetA.x - turetB.x) < 100) then
-						--stop the Turets
-						turetA:setLinearVelocity(0,0)
-						turetB:setLinearVelocity(0,0)
-						break
-					end
+					turetA:handleBehavior(turetB)
+					turetB:handleBehavior(turetA)
 				end
 			end
 		end
@@ -89,6 +84,7 @@ function scene:create( event )
 		bullet:addEventListener("collision", bullet)
 		physics.addBody(bullet, "dynamic", { density=1.0, friction=1, bounce=0.0 })
 		bullet:applyForce(50,-15,bullet.x,bullet.y)
+		sceneGroup:insert(bullet)
 	end
 
 	function bulletCollision(self, event)
@@ -100,6 +96,13 @@ function scene:create( event )
 				event.other:updateDamageBar()
 				if (event.other.checkDead()) then
 					display.remove(event.other)
+					-- Remove the turet
+					for i=1, #allTurets do
+						if (allTurets[i] == event.other) then
+								table.remove(allTurets, i)
+							break
+						end
+					end
 				end
 			end
 		end
