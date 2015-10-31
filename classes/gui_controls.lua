@@ -85,11 +85,11 @@ function GuiControls:newButton(x, y, width, height, text, style, onTouchEvent)
 end
 
 -- Instantiates a new turet menu, which is used for selecting turets to spawn.
-function GuiControls:newGuiTuretMenu()
+function GuiControls:newGuiTuretMenu(scene)
 
 	local menu = display.newGroup()
 	local turetListing = display.newGroup()
-	local turetListingBase = display.newRect(turetListing, 0, 16, 256, 128)
+	local turetListingBase = display.newRect(turetListing, 0, 16, 256, 200)
 	local guiButton = display.newGroup()
 	local guiButtonBase = display.newRect(guiButton, 0, 16, 96, 32)
 	local guiButtonText = display.newText(guiButton, "+ Turet", 16, 0, native.systemFont, 12)
@@ -119,10 +119,11 @@ function GuiControls:newGuiTuretMenu()
 
 		-- Add the different turets to the menu
 		for k, v in pairs(Turet.classes) do
-			local box = display.newImage(turetListing, "images/friends.png", 48*(k-1) + 32, -56)
+			local box = display.newImage(turetListing, "images/friends.png", 48*(k-1) + 32, -(turetListing.height-80))
 			box.anchorX = 0
 			box.anchorY = 1
-			local text = display.newText(turetListing, v, 48*(k-1) + 32, -48, native.systemFont, 12)
+			box.holdCount = -1
+			local text = display.newText(turetListing, v, 48*(k-1) + 32, box.y, native.systemFont, 12)
 			text:setFillColor(0)
 			text.anchorX = 0
 			-- Give the turet button a touch event, so the player can spawn it
@@ -133,13 +134,22 @@ function GuiControls:newGuiTuretMenu()
 				if event.phase == "began" then
 					box.holdCount = 0
 				elseif event.phase == "moved" then
+					if (box.holdCount == -1) then
+						return
+					end
 					box.holdCount = box.holdCount + 1
-					if box.holdCount > 20 then
-						local t = Turet:newTuret("friend", event.x, event.y)
+					if box.holdCount > 1 then
+						if (v == "Mage") then
+								local t = Turet:newMageTuret(scene, "friend", event.x, event.y, -1)
+						else
+								local t = Turet:newTuret(scene, "friend", event.x, event.y, -1)
+						end
 						hideTuretMenu()
+						box.holdCount = -1
+						menu:toFront()
 					end
 				else
-					box.holdCount = 0
+					box.holdCount = -1
 				end
 				return true
 			end
@@ -164,6 +174,7 @@ function GuiControls:newGuiTuretMenu()
 		guiButtonText.text = "X"
 		guiButton:toFront()
 		guiButton.isActive = true
+		menu:toFront()
 	end
 
 	function hideTuretMenu()

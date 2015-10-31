@@ -8,9 +8,8 @@
 ---------------------------------------------------------------------------------
 local composer = require( "composer" )
 
-local allTurets = {}
-
 local scene = composer.newScene()
+scene.allTurets = {}
 
 function scene:create( event )
 	local sceneGroup = self.view
@@ -25,44 +24,38 @@ function scene:create( event )
 
 	--Display and making floor bodies
 	local floor1 = display.newImage("images/floor.png")
+	floor1.name = "floor"
 	floor1.x = 100
 	floor1.y = 150
 	physics.addBody(floor1, "static", { density=0.0, friction=.1, bounce=0.0 })
 	sceneGroup:insert( floor1 )
 
 	local floor2 = display.newImage("images/floor.png")
+	floor2.name = "floor"
 	floor2.x = 100
 	floor2.y = 315
 	physics.addBody(floor2, "static", { density=0.0, friction=.1, bounce=0.0 })
 	sceneGroup:insert( floor2 )
 
 	local floor3 = display.newImage("images/floor.png")
+	floor3.name = "floor"
 	floor3.x = 100
 	floor3.y = 5
 	physics.addBody(floor3, "static", { density=0.0, friction=.1, bounce=0.0 })
 	sceneGroup:insert( floor3 )
 
-	local frnd = Turet:newTuret("friend", 500, 200)
-	frnd:applyForce(-80, 0, frnd.x, frnd.y)
-	sceneGroup:insert( frnd )
-	table.insert(allTurets, frnd)
+	-- local frnd = Turet:newMageTuret(scene, "friend", 300, 200, -1)
+	-- frnd:applyForce(-80, 0, frnd.x, frnd.y)
 
-
-	local enemy = Turet:newTuret("enemy", 20, 200)
-	enemy:applyForce(60,0,enemy.x,enemy.y)
-	sceneGroup:insert( enemy )
-	table.insert(allTurets, enemy)
-
-	-- local enemy1 = Turet:newTuret("enemy", -30, 200)
-	-- enemy1:applyForce(1,0,enemy1.x,enemy1.y)
-	-- sceneGroup:insert( enemy1 )
+	local enemy = Turet:newMageTuret(scene, "enemy", 20, 200, 1, { HPMax=1000 })
+	-- enemy:applyForce(60,0,enemy.x,enemy.y)
 
 	function enterFrame(event)
-		for i=1, #allTurets do
-			local turetA = allTurets[i]
-			for j=1, #allTurets do
+		for i=1, #scene.allTurets do
+			local turetA = scene.allTurets[i]
+			for j=1, #scene.allTurets do
 				if (i ~= j) then
-					local turetB = allTurets[j]
+					local turetB = scene.allTurets[j]
 					turetA:handleBehavior(turetB)
 					turetB:handleBehavior(turetA)
 				end
@@ -72,47 +65,17 @@ function scene:create( event )
 
 	Runtime:addEventListener("enterFrame", enterFrame)
 
-	local gui = GuiControls:newGuiTuretMenu()
+	local gui = GuiControls:newGuiTuretMenu(scene)
 	sceneGroup:insert( gui )
 
-	function bulletAppear()
-		local bullet = display.newRect(0, 0, 16, 8)
-		bullet.x= (enemy.x+10)
-		bullet.y= (enemy.y-20)
-		bullet.type = "enemy"
-		bullet.collision = bulletCollision
-		bullet:addEventListener("collision", bullet)
-		physics.addBody(bullet, "dynamic", { density=1.0, friction=1, bounce=0.0 })
-		bullet:applyForce(50,-15,bullet.x,bullet.y)
-		sceneGroup:insert(bullet)
+	function scene:newEnemy(event)
+		local y = math.random(50, 200)
+		local e = Turet:newMageTuret(scene, "enemy", 20, y, 1)
+		print "enemy created"
+		gui:toFront()
 	end
 
-	function bulletCollision(self, event)
-		if event.phase=="began" then
-			if event.target.type=="enemy" and event.other.type=="friend" then
-				display.remove(self)
-				event.other.HP = event.other.HP - 20
-				print(event.other.HP)
-				event.other:updateDamageBar()
-				if (event.other.checkDead()) then
-					display.remove(event.other)
-					-- Remove the turet
-					for i=1, #allTurets do
-						if (allTurets[i] == event.other) then
-								table.remove(allTurets, i)
-							break
-						end
-					end
-				end
-			end
-		end
-	end
-
-	timer.performWithDelay(1000, bulletAppear, -1)
-
-	-- all objects must be added to group (e.g. self.view)
-	-- sceneGroup:insert( bg )
-	-- sceneGroup:insert( title )
+	-- timer.performWithDelay(5000, newEnemy, -1)
 end
 
 function scene:show( event )
