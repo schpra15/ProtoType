@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------------------------
 --
--- main_menu.lua
+-- turet_factory.lua
 --
--- Contains just a quick prototype of the
+-- Contains just a quick prototype of the turet factory level
 -----------------------------------------------------------------------------------------
 -- Requires
 ---------------------------------------------------------------------------------
@@ -160,14 +160,25 @@ function createTuretListView()
 			for i=0, ySlots-1 do
 				for j=0, xSlots-1 do
 					if (turetIndex < #Game.myTurets) then
+						local t = Game.myTurets[turetIndex+1]
 						local turetIcon = display.newRect(myTuretsGroup,0,0,36,36)
-						turetIcon:setFillColor(1,0,0)
+
+						if (t.class == "Fighter") then
+							turetIcon:setFillColor(1,0,0)
+						elseif (t.class == "Tank") then
+							turetIcon:setFillColor(1,1,0)
+						elseif (t.class == "Support") then
+							turetIcon:setFillColor(0,0,1)
+						elseif (t.class == "Mage") then
+							turetIcon:setFillColor(0,1,0)
+						end
+
 						turetIcon.x = padding + j*(xSpacing) + display.screenOriginX
 						turetIcon.y = display.contentHeight + display.screenOriginY - myTuretsBase.height + i*(36+padding) + padding
 						turetIcon.anchorX = 0
 						turetIcon.anchorY = 0
 
-						local turetName = display.newText(myTuretsGroup, "turet name", turetIcon.x, turetIcon.y+36, native.systemFont, 10)
+						local turetName = display.newText(myTuretsGroup, t.turetName, turetIcon.x, turetIcon.y+36, native.systemFont, 10)
 						turetName.anchorY = 0
 						turetName.anchorX = 0
 						turetName:setFillColor(0)
@@ -181,6 +192,14 @@ function createTuretListView()
 		-- Create the back button
 		local createNewButton = GuiControls:newButton(display.contentWidth - display.screenOriginX-64, 120, 100, 24, "New Turet", GuiControls.styles.success, function(event)
 				currentTuret = {}
+				currentTuret.HPMax = 100
+		    currentTuret.HP = currentTuret.HPMax
+		    currentTuret.damage = 10
+		    currentTuret.armor = 10
+		    currentTuret.stamina = 100
+		    currentTuret.deployCost = 100
+		    currentTuret.deathReward = 10
+
 				transitionView(createNewTuretView())
 			end
 		)
@@ -210,7 +229,12 @@ function createNewTuretView()
 	-- Create the class buttons
 	local fighterButton = GuiControls:newButton(display.screenOriginX+50, 120, 100, 24, "Fighter", GuiControls.styles.danger, function(event)
 			currentTuret.class = "Fighter"
-			transitionView(createNewTuretView2())
+			local modal = newInputModal("Please enter a name for your new turet:", function(event)
+				currentTuret.turetName = event.inputValue
+				print(currentTuret.turetName)
+				transitionView(createNewTuretView2())
+			 end)
+			scene.view:insert(modal)
 		end
 	)
 	viewGroup:insert(fighterButton)
@@ -218,12 +242,18 @@ function createNewTuretView()
 	local description = display.newEmbossedText( "These turets focus on dealing damage.  However, they are quite frail and reckless.", display.screenOriginX+120, 120, native.systemFont, 10 )
 	description.anchorX = 0
 	description.anchorY = 0.5
-	description:setFillColor( 1, 1, 1 )
-	description:setEmbossColor( color )
+	description:setFillColor(0,0,0)
+	description:setEmbossColor(color)
 	viewGroup:insert(description)
 
 	local tankButton = GuiControls:newButton(display.screenOriginX+50, 150, 100, 24, "Tank", GuiControls.styles.warning, function(event)
-			print "Tank"
+		currentTuret.class = "Tank"
+		local modal = newInputModal("Please enter a name for your new turet:", function(event)
+			currentTuret.turetName = event.inputValue
+			print(currentTuret.turetName)
+			transitionView(createNewTuretView2())
+		 end)
+		scene.view:insert(modal)
 		end
 	)
 	viewGroup:insert(tankButton)
@@ -231,12 +261,18 @@ function createNewTuretView()
 	description = display.newEmbossedText( "These turets focus on protecting towers and other turets, but their mobility is limited.", display.screenOriginX+120, 150, native.systemFont, 10 )
 	description.anchorX = 0
 	description.anchorY = 0.5
-	description:setFillColor( 1, 1, 1 )
-	description:setEmbossColor( color )
+	description:setFillColor(0, 0, 0)
+	description:setEmbossColor(color)
 	viewGroup:insert(description)
 
 	local supportButton = GuiControls:newButton(display.screenOriginX+50, 180, 100, 24, "Support", GuiControls.styles.primary, function(event)
-			print "Support"
+		currentTuret.class = "Support"
+		local modal = newInputModal("Please enter a name for your new turet:", function(event)
+			currentTuret.turetName = event.inputValue
+			print(currentTuret.turetName)
+			transitionView(createNewTuretView2())
+		 end)
+		scene.view:insert(modal)
 		end
 	)
 	viewGroup:insert(supportButton)
@@ -244,12 +280,18 @@ function createNewTuretView()
 	description = display.newEmbossedText( "These turets can help other friendly turets out, but do not attack.", display.screenOriginX+120, 180, native.systemFont, 10 )
 	description.anchorX = 0
 	description.anchorY = 0.5
-	description:setFillColor( 1, 1, 1 )
-	description:setEmbossColor( color )
+	description:setFillColor(0, 0, 0)
+	description:setEmbossColor(color)
 	viewGroup:insert(description)
 
 	local mageButton = GuiControls:newButton(display.screenOriginX+50, 210, 100, 24, "Mage", GuiControls.styles.success, function(event)
-			print "Mage"
+		currentTuret.class = "Mage"
+		local modal = newInputModal("Please enter a name for your new turet:", function(event)
+			currentTuret.turetName = event.inputValue
+			print(currentTuret.turetName)
+			transitionView(createNewTuretView2())
+		 end)
+		scene.view:insert(modal)
 		end
 	)
 	viewGroup:insert(mageButton)
@@ -257,8 +299,8 @@ function createNewTuretView()
 	description = display.newEmbossedText( "These turets can attack with special spells that can cause status ailments.", display.screenOriginX+120, 210, native.systemFont, 10 )
 	description.anchorX = 0
 	description.anchorY = 0.5
-	description:setFillColor( 1, 1, 1 )
-	description:setEmbossColor( color )
+	description:setFillColor(0, 0, 0)
+	description:setEmbossColor(color)
 	viewGroup:insert(description)
 
 
@@ -280,9 +322,72 @@ function createNewTuretView2()
 
 	local viewGroup = display.newGroup()
 
-	
+	-- currentTuret.deathReward = 10
+	local nameText = display.newEmbossedText("Name: "..currentTuret.turetName, display.screenOriginX+10, 90, native.systemFont, 14)
+	nameText.anchorX = 0
+	nameText:setFillColor(0)
+	viewGroup:insert(nameText)
 
+	local classText = display.newEmbossedText("Class: "..currentTuret.class, display.screenOriginX+10, 120, native.systemFont, 10)
+	classText.anchorX = 0
+	classText:setFillColor(0)
+	viewGroup:insert(classText)
+	local hpText = display.newEmbossedText("HP: "..currentTuret.HP, display.screenOriginX+10, 150, native.systemFont, 10)
+	hpText.anchorX = 0
+	hpText:setFillColor(0)
+	viewGroup:insert(hpText)
+	local damageText = display.newEmbossedText("Damage: "..currentTuret.damage, display.screenOriginX+10, 170, native.systemFont, 10)
+	damageText.anchorX = 0
+	damageText:setFillColor(0)
+	viewGroup:insert(damageText)
+	local armorText = display.newEmbossedText("Armor: "..currentTuret.armor, display.screenOriginX+10, 190, native.systemFont, 10)
+	armorText.anchorX = 0
+	armorText:setFillColor(0)
+	viewGroup:insert(armorText)
+	local staminaText = display.newEmbossedText("Stamina: "..currentTuret.stamina, display.screenOriginX+10, 210, native.systemFont, 10)
+	staminaText.anchorX = 0
+	staminaText:setFillColor(0)
+	viewGroup:insert(staminaText)
+	local deployCostText = display.newEmbossedText("Deploy Cost: $"..currentTuret.deployCost, display.screenOriginX+10, 230, native.systemFont, 10)
+	deployCostText.anchorX = 0
+	deployCostText:setFillColor(0)
+	viewGroup:insert(deployCostText)
 
+	local turetIcon = display.newRect(viewGroup, 0,0,36,36)
+	if (currentTuret.class == "Fighter") then
+		turetIcon:setFillColor(1,0,0)
+	elseif (currentTuret.class == "Tank") then
+		turetIcon:setFillColor(1,1,0)
+	elseif (currentTuret.class == "Support") then
+		turetIcon:setFillColor(0,0,1)
+	elseif (currentTuret.class == "Mage") then
+		turetIcon:setFillColor(0,1,0)
+	end
+	turetIcon.x = display.screenOriginX+150
+	turetIcon.y = 150
+	turetIcon.anchorX = 0
+	turetIcon.anchorY = 0
+
+	-- Display the Choose Base button
+	local baseButton = GuiControls:newButton(-display.screenOriginX+display.contentWidth-51, display.contentHeight-200, 100, 24, "Choose Base", GuiControls.styles.default, function(event)
+
+		end
+	)
+	viewGroup:insert(baseButton)
+
+	-- Display the Choose Weapon button
+	local weaponButton = GuiControls:newButton(-display.screenOriginX+display.contentWidth-51, display.contentHeight-170, 100, 24, "Choose Weapon", GuiControls.styles.default, function(event)
+
+		end
+	)
+	viewGroup:insert(weaponButton)
+
+	-- Display the Choose Armor button
+	local armorButton = GuiControls:newButton(-display.screenOriginX+display.contentWidth-51, display.contentHeight-140, 100, 24, "Choose Armor", GuiControls.styles.default, function(event)
+
+		end
+	)
+	viewGroup:insert(armorButton)
 
 	-- Display a Done button
 	local doneButton = GuiControls:newButton(-display.screenOriginX+display.contentWidth-51, display.contentHeight-13, 100, 24, "Done", GuiControls.styles.default, function(event)
@@ -297,9 +402,63 @@ end
 
 -- Used to switch between views
 function transitionView(newView)
-	scene.view:remove(currentView)
+	transition.to(currentView,
+					{ time = 500,
+					x = -display.contentWidth*2,
+					transition = easing.inOutExpo,
+					onComplete = function()
+							scene.view:remove(currentView)
+					end }
+				)
+	transition.from(newView,
+					{ time = 500,
+					x = display.contentWidth*2,
+					transition = easing.inOutExpo,
+					onComplete = function()
+							currentView = newView
+					end }
+				)
 	scene.view:insert(newView)
-	currentView = newView
+end
+
+function newInputModal(promptText, onDone)
+	local modalGroup = display.newGroup()
+
+	local modalBG = display.newRect(modalGroup, display.screenOriginX, display.screenOriginY, display.contentWidth+200, display.contentHeight+100)
+	modalBG.anchorX = 0
+	modalBG.anchorY = 0
+	modalBG:setFillColor(0, 0, 0, 0.5)
+
+	function modalBG:touch(event)
+		-- Prevent event propagation
+		return true
+	end
+
+	modalBG:addEventListener("touch", modalBG)
+
+	local modalScreenGroup = display.newGroup()
+	modalGroup:insert(modalScreenGroup)
+	modalScreenGroup.x = display.contentWidth/2
+	modalScreenGroup.y = display.contentHeight/2
+
+	local modalScreen = display.newRoundedRect(modalScreenGroup, 0, 0, 300, 200, 2)
+	local prompt = display.newText(modalScreenGroup, promptText, 0, -80, native.systemFont, 10)
+	prompt:setFillColor(0)
+
+	local input = native.newTextField( 0, 0, 220, 36 )
+	modalScreenGroup:insert(input)
+
+	local doneButton = GuiControls:newButton(0, 50, 100, 24, "Done", GuiControls.styles.default,
+		function (event)
+			event.inputValue = input.text
+			if (event.inputValue == nil or event.inputValue == "") then return false end
+			if (onDone ~= nil) then onDone(event) end
+			scene.view:remove(modalGroup)
+		end
+	)
+	modalScreenGroup:insert(doneButton)
+
+	return modalGroup
 end
 
 ---------------------------------------------------------------------------------

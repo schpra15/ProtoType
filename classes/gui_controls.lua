@@ -63,14 +63,18 @@ function GuiControls:newButton(x, y, width, height, text, style, onTouchEvent)
 	btn.anchorX = 0.5
 	btn.anchorY = 0.5
 
+	btn.isPressed = false
+
 	btn:addEventListener("touch", function(event)
 			if event.phase == "began" then
 				display.getCurrentStage():setFocus( event.target, event.id )
 				transition.to(grp, {time=50, xScale=0.95, yScale=0.95})
-			elseif event.phase == "ended" then
+				btn.isPressed = true
+			elseif event.phase == "ended" and btn.isPressed then
 				display.getCurrentStage():setFocus( nil, event.id )
 				transition.to(grp, {time=50, xScale=1, yScale=1})
-				onTouchEvent()
+				onTouchEvent(event)
+				btn.isPressed = false
 			end
 		end
 	)
