@@ -16,7 +16,7 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
   turet.x = x
   turet.y = y
   if (type == "friend") then
-    turet.body = display.newImage(turet, "images/friends.png", 0, 0)
+    turet.body = display.newImage(turet, "images/turet.png", 0, 0)
     turet.filter = { groupIndex = -2 }
     turet.bulletFilter = { groupIndex = -2 }
   else
