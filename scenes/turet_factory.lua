@@ -370,7 +370,7 @@ function createNewTuretView2()
 
 	-- Display the Choose Base button
 	local baseButton = GuiControls:newButton(-display.screenOriginX+display.contentWidth-51, display.contentHeight-200, 100, 24, "Choose Base", GuiControls.styles.default, function(event)
-
+			newSelectionModal(nil, nil)
 		end
 	)
 	viewGroup:insert(baseButton)
@@ -452,6 +452,41 @@ function newInputModal(promptText, onDone)
 		function (event)
 			event.inputValue = input.text
 			if (event.inputValue == nil or event.inputValue == "") then return false end
+			if (onDone ~= nil) then onDone(event) end
+			scene.view:remove(modalGroup)
+		end
+	)
+	modalScreenGroup:insert(doneButton)
+
+	return modalGroup
+end
+
+function newSelectionModal(options, onDone)
+	local modalGroup = display.newGroup()
+
+	-- local modalBG = display.newRect(modalGroup, display.screenOriginX, display.screenOriginY, display.contentWidth+200, display.contentHeight+100)
+	-- modalBG.anchorX = 0
+	-- modalBG.anchorY = 0
+	-- modalBG:setFillColor(0, 0, 0, 0.5)
+	--
+	-- function modalBG:touch(event)
+	-- 	-- Prevent event propagation
+	-- 	return true
+	-- end
+
+	-- modalBG:addEventListener("touch", modalBG)
+
+	local modalScreenGroup = display.newGroup()
+	modalGroup:insert(modalScreenGroup)
+	modalScreenGroup.x = display.contentWidth-150
+	modalScreenGroup.y = display.contentHeight-100
+
+	local modalScreen = display.newRoundedRect(modalScreenGroup, 0, 0, 300, 200, 2)
+	local prompt = display.newText(modalScreenGroup, "Select a base:", 0, -80, native.systemFont, 10)
+	prompt:setFillColor(0)
+
+	local doneButton = GuiControls:newButton(0, 50, 100, 24, "Done", GuiControls.styles.default,
+		function (event)
 			if (onDone ~= nil) then onDone(event) end
 			scene.view:remove(modalGroup)
 		end

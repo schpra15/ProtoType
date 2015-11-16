@@ -47,7 +47,9 @@ function scene:create( event )
 	-- local frnd = Turet:newMageTuret(scene, "friend", 300, 200, -1)
 	-- frnd:applyForce(-80, 0, frnd.x, frnd.y)
 
-	local enemy = Turet:newMageTuret(scene, "enemy", 20, 200, 1, { HPMax=1000 })
+	local enemy = Turet:newMageTuret(scene, "enemy", 20, 200, 1, { HPMax=100 })
+	local enemy2 = Turet:newMageTuret(scene, "enemy", 20, 50, 1, { HPMax=200 })
+
 	-- enemy:applyForce(60,0,enemy.x,enemy.y)
 
 	function enterFrame(event)
