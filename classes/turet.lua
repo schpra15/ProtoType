@@ -17,10 +17,12 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
   turet.y = y
   if (type == "friend") then
     turet.body = display.newImage(turet, "images/turet.png", 0, 0)
+    turet.body.xScale = -direction
     turet.filter = { groupIndex = -2 }
     turet.bulletFilter = { groupIndex = -2 }
   else
-    turet.body = display.newImage(turet, "images/enemies.png", 0, 0)
+    turet.body = display.newImage(turet, "images/turet.png", 0, 0)
+    turet.body.xScale = -direction
     turet.filter = { groupIndex = -3 }
     turet.bulletFilter = { groupIndex = -3 }
   end
@@ -35,7 +37,7 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
     stats = (stats == nil and {
       HPMax=100,
       damage=10,
-      armor=10,
+      armor=0,
       stamina=100,
       deploycost=100,
       deathReward=10
@@ -44,7 +46,7 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
     turet.HPMax = (stats.HPMax ~= nil and stats.HPMax or 100)
     turet.HP = turet.HPMax
     turet.damage = (stats.damage ~= nil and stats.damage or 10)
-    turet.armor = (stats.armor ~= nil and stats.armor or 10)
+    turet.armor = (stats.armor ~= nil and stats.armor or 0)
     turet.stamina = (stats.stamina ~= nil and stats.stamina or 100)
     turet.deployCost = (stats.deployCost ~= nil and stats.deployCost or 100)
     turet.deathReward = (stats.deathReward ~= nil and stats.deathReward or 10)
@@ -62,30 +64,8 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
       turet:addEventListener( "touch", turet )
     end
 
-    turet.healthBar = display.newGroup()
-    turet.healthBar.alpha = 0.5
-    -- turet:insert(turet.healthBar)
-    turet.healthBarBase = display.newRect(turet.healthBar, 0, -30, turet.HPMax/2, 5)
-    turet.healthBarBase:setFillColor( 100/255, 100/255, 100/255 )
-    turet.healthBarBase.strokeWidth = 1
-    turet.healthBarBase:setStrokeColor( 0, 0, 0, 1 )
-    turet.healthBarBase.anchorX = 0
-    turet.healthBarBase.x = -turet.healthBarBase.width/2
-    -- turet.healthBar.x = turet.x
-    -- turet.healthBar.y = turet.y
+    turet.healthBar = Classes:newHealthBar(turet, 0, 0)
 
-    turet.damageBar = display.newRect(turet.healthBar, 0, -30, turet.HPMax/2, 5)
-    turet.damageBar:setFillColor( 0/255, 255/255, 0/255 )
-    turet.damageBar.anchorX = 0
-    turet.damageBar.x = -turet.healthBarBase.width/2
-
-    Runtime:addEventListener("enterFrame", turet)
-
-  end
-
-  function turet:enterFrame(event)
-    turet.healthBar.x = turet.x
-    turet.healthBar.y = turet.y - (turet.isDragging and 30 or 0)
   end
 
   --- Represents the turet's behavior, which varies based
@@ -101,8 +81,24 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
     end
   end
 
+  --- Computes the damage done to a turet
+  -- ------------------------------------------------
+  function turet:takeDamage(damage)
+    local totalDamage = math.max(damage - turet.armor, 1)
+    turet.HP = turet.HP - totalDamage
+    turet.healthBar:updateDamageBar()
+
+    local txt = Classes:newFloatText(totalDamage, turet.x, turet.y-32, 1000)
+    scene.gameView:insert(txt)
+
+    if (not turet.isDead and turet.HP <= 0) then
+      turet:die()
+    end
+  end
+
   --- Prints out the turet's stats to the command line
   -- for developer's reference.
+  -- ------------------------------------------------
   function turet:printStats()
     print("Name: "..turet.turetName)
     print("Class: "..turet.class)
@@ -114,32 +110,14 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
     print("Death Reward $: "..turet.deathReward)
   end
 
-  --- Prints out the turet's stats to the command line
-  -- for developer's reference.
-  function turet:updateDamageBar()
-    -- turet.damageBar.x = turet.HP / 4
-    transition.to(turet.damageBar, {time=200, width=math.max(turet.HP, 0)/2 })
-    -- turet.damageBar.width = math.max(turet.HPMax - turet.HP, 0)/2
-
-    if (turet.HP/turet.HPMax < 0.25) then
-        turet.damageBar:setFillColor( 1, 0, 0 )
-    elseif (turet.HP/turet.HPMax < .6) then
-        turet.damageBar:setFillColor( 1, 1, 0 )
-    else
-        turet.damageBar:setFillColor( 0, 1, 0)
-    end
-  end
-
-  --- Prints out the turet's stats to the command line
-  -- for developer's reference.
+  --- Removes the turet from the game.
   -- ------------------------------------------------
   function turet:die()
-    -- physics.removeBody(turet)
     turet.isDead = true
     if (turet.t ~= nil) then timer.cancel(turet.t) end
     transition.to(turet, { time=200, alpha=0, onComplete=function()
+        turet.healthBar:die()
         display.remove(turet)
-        display.remove(turet.healthBar)
         Runtime:removeEventListener("enterFrame", turet)
         -- Remove the turet
         for i=1, #scene.allTurets do
@@ -195,8 +173,8 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
 
   turet:construct()
 
-  scene.view:insert(turet)
-  scene.view:insert(turet.healthBar)
+  scene.gameView:insert(turet)
+  scene.gameView:insert(turet.healthBar)
   table.insert(scene.allTurets, turet)
 
   return turet
@@ -241,20 +219,29 @@ function Turet:newBullet(scene, turet)
       event.contact.isEnabled = false
       return true
     end
-    if event.phase=="began" and event.other.name=="turet" then
+    if event.phase=="began" then
       if event.target.type ~= event.other.type then
-        event.target:die()
-        event.other.HP = event.other.HP - event.target.damage
-        event.other:updateDamageBar()
-        if (not event.other.isDead and event.other.HP <= 0) then
-          event.other:die()
+        if (event.other.name == "turet") then
+          event.target:die()
+          event.other:takeDamage(event.target.damage)
+        elseif (event.other.name == "tower") then
+          event.target:die()
+          event.other.HP = event.other.HP - event.target.damage
+          local txt = Classes:newFloatText(event.target.damage, event.other.x, event.other.y-64, 1000)
+          scene.gameView:insert(txt)
+
+          event.other.healthBar:updateDamageBar()
+          -- if (not event.other.isDead and event.other.HP <= 0) then
+          --   event.other:die()
+          -- end
         end
       end
+      return true
     end
   end
 
   function bullet:enterFrame(event)
-    if (bullet.x > display.contentWidth or bullet.x < 0) then
+    if (bullet.x > display.contentWidth-display.screenOriginX*2 or bullet.x < 0) then
       bullet:die()
     end
   end
@@ -270,6 +257,8 @@ function Turet:newBullet(scene, turet)
   bullet:applyForce(50*turet.direction, -15, bullet.x, bullet.y)
 
   Runtime:addEventListener("enterFrame", bullet)
+
+  scene.gameView:insert(bullet)
 
   return bullet
 end

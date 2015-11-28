@@ -44,7 +44,7 @@ GuiControls.styles = {
 
 -- Functions
 -----------------------------------------------------------------------------------------
--- Instantiates a new button, using our own templates
+--- Instantiates a new button, using our own templates
 function GuiControls:newButton(x, y, width, height, text, style, onTouchEvent)
 	if (style == nil or style.fillColor == nil) then
 		style = GuiControls.styles.default
@@ -88,7 +88,7 @@ function GuiControls:newButton(x, y, width, height, text, style, onTouchEvent)
 	return grp
 end
 
--- Instantiates a new turet menu, which is used for selecting turets to spawn.
+--- Instantiates a new turet menu, which is used for selecting turets to spawn.
 function GuiControls:newGuiTuretMenu(scene)
 
 	local menu = display.newGroup()
@@ -122,12 +122,12 @@ function GuiControls:newGuiTuretMenu(scene)
 		turetListingBase.anchorY = 1
 
 		-- Add the different turets to the menu
-		for k, v in pairs(Turet.classes) do
+		for k, v in pairs(Game.myTurets) do
 			local box = display.newImage(turetListing, "images/friends.png", 48*(k-1) + 32, -(turetListing.height-80))
 			box.anchorX = 0
 			box.anchorY = 1
 			box.holdCount = -1
-			local text = display.newText(turetListing, v, 48*(k-1) + 32, box.y, native.systemFont, 12)
+			local text = display.newText(turetListing, v.turetName, 48*(k-1) + 32, box.y, native.systemFont, 12)
 			text:setFillColor(0)
 			text.anchorX = 0
 			-- Give the turet button a touch event, so the player can spawn it
@@ -143,12 +143,22 @@ function GuiControls:newGuiTuretMenu(scene)
 					end
 					box.holdCount = box.holdCount + 1
 					if box.holdCount > 1 then
-						if (v == "Mage") then
-								local t = Turet:newMageTuret(scene, "friend", event.x, event.y, -1)
+
+						if (Game.money - v.deployCost < 0) then
+							-- Throw code in here as a warning
+
+						elseif (v.class == "Mage") then
+								-- We have to offset the x position because of the scrollview's offset.
+								-- The GUI control is not part of the scrollview, so its positioning is different.
+								local t = Turet:newMageTuret(scene, "friend", event.x-display.screenOriginX, event.y, 1, v)
+								Game.money = Game.money - v.deployCost
+								hideTuretMenu()
 						else
-								local t = Turet:newTuret(scene, "friend", event.x, event.y, -1)
+								local t = Turet:newTuret(scene, "friend", event.x-display.screenOriginX, event.y, 1, v)
+								Game.money = Game.money - v.deployCost
+								hideTuretMenu()
 						end
-						hideTuretMenu()
+
 						box.holdCount = -1
 						menu:toFront()
 					end

@@ -7,48 +7,103 @@
 -- Requires
 ---------------------------------------------------------------------------------
 local composer = require( "composer" )
+local widget = require( "widget" )
 
 local scene = composer.newScene()
 scene.allTurets = {}
+scene.towers = {}
 
 function scene:create( event )
 	local sceneGroup = self.view
 
+	self.gameView = display.newGroup()
+
 	physics.start()
 
 	--Display Background
-	local background = display.newImage("images/background.png")
-	background.x = 100
+	local background = display.newRect(0,0,2000,2000) --display.newImage("images/background.png")
+	background:setFillColor(0,0.9,1)
+	background.x = 150
 	background.y = 100
-	sceneGroup:insert( background )
+	--sceneGroup:insert( background )
+	self.gameView:insert(background)
 
 	--Display and making floor bodies
 	local floor1 = display.newImage("images/floor.png")
 	floor1.name = "floor"
-	floor1.x = 100
+	floor1.x = 150
 	floor1.y = 150
 	physics.addBody(floor1, "static", { density=0.0, friction=.1, bounce=0.0 })
-	sceneGroup:insert( floor1 )
+	--sceneGroup:insert( floor1 )
+	self.gameView:insert(floor1)
 
 	local floor2 = display.newImage("images/floor.png")
 	floor2.name = "floor"
-	floor2.x = 100
+	floor2.x = 150
 	floor2.y = 315
 	physics.addBody(floor2, "static", { density=0.0, friction=.1, bounce=0.0 })
-	sceneGroup:insert( floor2 )
+	--sceneGroup:insert( floor2 )
+	self.gameView:insert(floor2)
 
 	local floor3 = display.newImage("images/floor.png")
 	floor3.name = "floor"
-	floor3.x = 100
+	floor3.x = 150
 	floor3.y = 5
 	physics.addBody(floor3, "static", { density=0.0, friction=.1, bounce=0.0 })
-	sceneGroup:insert( floor3 )
+	--sceneGroup:insert( floor3 )
+	self.gameView:insert(floor3)
 
-	-- local frnd = Turet:newMageTuret(scene, "friend", 300, 200, -1)
-	-- frnd:applyForce(-80, 0, frnd.x, frnd.y)
+	local floor4 = display.newImage("images/floor.png")
+	floor4.name = "floor"
+	floor4.x = 150
+	floor4.y = 465
+	physics.addBody(floor4, "static", { density=0.0, friction=.1, bounce=0.0 })
+	--sceneGroup:insert( floor2 )
+	self.gameView:insert(floor4)
 
-	local enemy = Turet:newMageTuret(scene, "enemy", 20, 200, 1, { HPMax=1000 })
-	-- enemy:applyForce(60,0,enemy.x,enemy.y)
+	-- Initialize some enemies
+	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 150, -1, { HPMax=100 })
+	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 315, -1, { HPMax=100 })
+	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 465, -1, { HPMax=100 })
+
+	-- Initialize the towers
+	Tower:newTower(scene, "friend", 32, 315)
+	Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, 150)
+	Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, 465)
+
+	sceneGroup.gui = display.newGroup()
+	-- local moneyText = display.newEmbossedText("$"..Game.money, display.screenOriginX, 0, native.systemFontBold, 20)
+	-- 	moneyText.anchorX = 0
+	-- 	moneyText.anchorY = 0
+	-- 	moneyText:setFillColor(0, 0.7, 0, 1)
+	-- 	moneyText:setEmbossColor(GuiControls.styles.success.embrossColor)
+	local moneyText = Classes:newUpdateText("$", display.screenOriginX, 0, Game.money)
+	sceneGroup.gui:insert(moneyText)
+
+	local conditionText = display.newEmbossedText("Condition: Defeat Enemy Towers!", display.contentWidth-display.screenOriginX, 0, native.systemFontBold, 10)
+		conditionText.anchorX = 1
+		conditionText.anchorY = 0
+		conditionText:setFillColor(1, 1, 1, 1)
+		conditionText:setEmbossColor(GuiControls.styles.success.embrossColor)
+	sceneGroup.gui:insert(conditionText)
+	local turetMenu = GuiControls:newGuiTuretMenu(scene)
+	sceneGroup.gui:insert(turetMenu)
+
+	local scrollView = widget.newScrollView
+	{
+	    top = 0,
+	    left = display.screenOriginX,
+	    width = display.contentWidth-display.screenOriginX*2,
+	    height = display.contentHeight,
+	    scrollWidth = 0,
+	    scrollHeight = 100,
+			horizontalScrollDisabled = true,
+	    listener = nil
+	}
+
+	-- Set the scroll height to be the total height of the game field
+	scrollView:setScrollHeight(465)
+
 
 	function enterFrame(event)
 		for i=1, #scene.allTurets do
@@ -61,21 +116,21 @@ function scene:create( event )
 				end
 			end
 		end
-	end
 
+		for k,v in pairs(scene.towers) do
+			if (v == nil) then
+				print (dsfafd)
+			end
+		end
+
+		moneyText:setValue(Game.money)
+	end
 	Runtime:addEventListener("enterFrame", enterFrame)
 
-	local gui = GuiControls:newGuiTuretMenu(scene)
-	sceneGroup:insert( gui )
+	scrollView:insert(self.gameView)
+	sceneGroup:insert(scrollView)
+	sceneGroup:insert(sceneGroup.gui)
 
-	function scene:newEnemy(event)
-		local y = math.random(50, 200)
-		local e = Turet:newMageTuret(scene, "enemy", 20, y, 1)
-		print "enemy created"
-		gui:toFront()
-	end
-
-	-- timer.performWithDelay(5000, newEnemy, -1)
 end
 
 function scene:show( event )
@@ -113,6 +168,14 @@ function scene:destroy( event )
 	--
 	-- INSERT code here to cleanup the scene
 	-- e.g. remove display objects, remove touch listeners, save state, etc.
+end
+
+
+function scene:newEnemy(event)
+	local y = math.random(50, 200)
+	local e = Turet:newMageTuret(scene, "enemy", 400, y, -1)
+	print "enemy created"
+	self.view.gui:toFront()
 end
 
 ---------------------------------------------------------------------------------
