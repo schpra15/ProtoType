@@ -11,7 +11,7 @@ Game = {} -- Define the game utility object
 Game.money = 1000
 Game.myTurets = {
   {
-    turetName = "Steak",
+    turetName = "TestFighter",
     class = "Fighter",
     HPMax = 100,
     damage = 10,

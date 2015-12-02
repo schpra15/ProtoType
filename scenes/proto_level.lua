@@ -16,6 +16,9 @@ scene.towers = {}
 function scene:create( event )
 	local sceneGroup = self.view
 
+	local music = audio.loadStream("audio/bgm_game.wav")
+	audio.play(music, {loops = -1})
+
 	self.gameView = display.newGroup()
 
 	physics.start()
