@@ -15,6 +15,10 @@ scene.towers = {}
 
 function scene:create( event )
 	local sceneGroup = self.view
+	
+	-- Create the level
+	local levelData = Game.levels[Game.currentLevel]
+	Game.levelMoney = levelData.startMoney	
 
 	local music = audio.loadStream("audio/bgm_game.wav")
 	audio.play(music, {loops = -1})
@@ -30,49 +34,45 @@ function scene:create( event )
 	background.y = 100
 	--sceneGroup:insert( background )
 	self.gameView:insert(background)
+	
+	-- draw the ceiling
+	local ceiling = display.newImage("images/floor.png")
+	ceiling.name = "floor"
+	ceiling.x = 150
+	ceiling.y = 5
+	physics.addBody(ceiling, "static", { density=0.0, friction=.1, bounce=0.0 })
+	self.gameView:insert(ceiling)
+	
+	-- Make the floors
+	for i=1, #levelData.floors do
+		local floor = display.newImage("images/floor.png")
+		floor.name = "floor"
+		floor.x = 150
+		floor.y = 150 * i
+		physics.addBody(floor, "static", { density=0.0, friction=.1, bounce=0.0 })
+		self.gameView:insert(floor)
+		
+		if (levelData.floors[i].tower == 0) then
+			-- Initialize the towers
+			Tower:newTower(scene, "friend", 32, 150 * i)	
+		else
+			Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, 150 * i)
+		end
+	end
 
-	--Display and making floor bodies
-	local floor1 = display.newImage("images/floor.png")
-	floor1.name = "floor"
-	floor1.x = 150
-	floor1.y = 150
-	physics.addBody(floor1, "static", { density=0.0, friction=.1, bounce=0.0 })
-	--sceneGroup:insert( floor1 )
-	self.gameView:insert(floor1)
-
-	local floor2 = display.newImage("images/floor.png")
-	floor2.name = "floor"
-	floor2.x = 150
-	floor2.y = 315
-	physics.addBody(floor2, "static", { density=0.0, friction=.1, bounce=0.0 })
-	--sceneGroup:insert( floor2 )
-	self.gameView:insert(floor2)
-
-	local floor3 = display.newImage("images/floor.png")
-	floor3.name = "floor"
-	floor3.x = 150
-	floor3.y = 5
-	physics.addBody(floor3, "static", { density=0.0, friction=.1, bounce=0.0 })
-	--sceneGroup:insert( floor3 )
-	self.gameView:insert(floor3)
-
-	local floor4 = display.newImage("images/floor.png")
-	floor4.name = "floor"
-	floor4.x = 150
-	floor4.y = 465
-	physics.addBody(floor4, "static", { density=0.0, friction=.1, bounce=0.0 })
-	--sceneGroup:insert( floor2 )
-	self.gameView:insert(floor4)
+	local bottomFloor = display.newImage("images/floor.png")
+	bottomFloor.name = "floor"
+	bottomFloor.x = 150
+	bottomFloor.y = #levelData.floors * 150
+	physics.addBody(bottomFloor, "static", { density=0.0, friction=.1, bounce=0.0 })
+	self.gameView:insert(bottomFloor)
 
 	-- Initialize some enemies
 	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 150, -1, { HPMax=100 })
 	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 315, -1, { HPMax=100 })
 	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 465, -1, { HPMax=100 })
 
-	-- Initialize the towers
-	Tower:newTower(scene, "friend", 32, 315)
-	Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, 150)
-	Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, 465)
+
 
 	sceneGroup.gui = display.newGroup()
 	-- local moneyText = display.newEmbossedText("$"..Game.money, display.screenOriginX, 0, native.systemFontBold, 20)

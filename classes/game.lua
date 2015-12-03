@@ -8,7 +8,10 @@ print "game.lua initialized"
 
 Game = {} -- Define the game utility object
 
-Game.money = 1000
+Game.money = 0
+Game.levelMoney = 0
+Game.currentLevel = 1
+
 Game.myTurets = {
   {
     turetName = "TestFighter",
@@ -40,4 +43,36 @@ Game.myTurets = {
     deployCost = 200,
     deathReward = 10
   }
+}
+
+Game.levels = {
+	{
+		floors = {
+			{
+				tower = 1, -- 0 = player, 1 = enemy
+				theme = 0,
+			},
+			{
+				tower = 0, -- 0 = player, 1 = enemy
+				theme = 0,
+			},			{
+				tower = 0, -- 0 = player, 1 = enemy
+				theme = 0,
+			},			{
+				tower = 0, -- 0 = player, 1 = enemy
+				theme = 0,
+			},			{
+				tower = 0, -- 0 = player, 1 = enemy
+				theme = 0,
+			},			{
+				tower = 0, -- 0 = player, 1 = enemy
+				theme = 0,
+			},			{
+				tower = 0, -- 0 = player, 1 = enemy
+				theme = 0,
+			},
+		},
+		startMoney = 1000,
+		condition = 0
+	},
 }
