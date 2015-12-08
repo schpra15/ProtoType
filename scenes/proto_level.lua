@@ -44,19 +44,22 @@ function scene:create( event )
 	self.gameView:insert(ceiling)
 	
 	-- Make the floors
+	local floorHeight = 150
+	local levelHeight = floorHeight * #levelData.floors
+	
 	for i=1, #levelData.floors do
 		local floor = display.newImage("images/floor.png")
 		floor.name = "floor"
 		floor.x = 150
-		floor.y = 150 * i
+		floor.y = floorHeight * i
 		physics.addBody(floor, "static", { density=0.0, friction=.1, bounce=0.0 })
 		self.gameView:insert(floor)
 		
 		if (levelData.floors[i].tower == 0) then
 			-- Initialize the towers
-			Tower:newTower(scene, "friend", 32, 150 * i)	
+			Tower:newTower(scene, "friend", 32, floorHeight * i)	
 		else
-			Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, 150 * i)
+			Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, floorHeight * i)
 		end
 	end
 
@@ -69,10 +72,6 @@ function scene:create( event )
 
 	-- Initialize some enemies
 	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 150, -1, { HPMax=100 })
-	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 315, -1, { HPMax=100 })
-	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 465, -1, { HPMax=100 })
-
-
 
 	sceneGroup.gui = display.newGroup()
 	-- local moneyText = display.newEmbossedText("$"..Game.money, display.screenOriginX, 0, native.systemFontBold, 20)
@@ -80,7 +79,7 @@ function scene:create( event )
 	-- 	moneyText.anchorY = 0
 	-- 	moneyText:setFillColor(0, 0.7, 0, 1)
 	-- 	moneyText:setEmbossColor(GuiControls.styles.success.embrossColor)
-	local moneyText = Classes:newUpdateText("$", display.screenOriginX, 0, Game.money)
+	local moneyText = Classes:newUpdateText("$", display.screenOriginX, 0, Game.levelMoney)
 	sceneGroup.gui:insert(moneyText)
 
 	local conditionText = display.newEmbossedText("Condition: Defeat Enemy Towers!", display.contentWidth-display.screenOriginX, 0, native.systemFontBold, 10)
@@ -92,7 +91,7 @@ function scene:create( event )
 	local turetMenu = GuiControls:newGuiTuretMenu(scene)
 	sceneGroup.gui:insert(turetMenu)
 
-	local scrollView = widget.newScrollView
+	scene.scrollView = widget.newScrollView
 	{
 	    top = 0,
 	    left = display.screenOriginX,
@@ -105,8 +104,7 @@ function scene:create( event )
 	}
 
 	-- Set the scroll height to be the total height of the game field
-	scrollView:setScrollHeight(465)
-
+	scene.scrollView:setScrollHeight(levelHeight)
 
 	function enterFrame(event)
 		for i=1, #scene.allTurets do
@@ -126,12 +124,12 @@ function scene:create( event )
 			end
 		end
 
-		moneyText:setValue(Game.money)
+		moneyText:setValue(Game.levelMoney)
 	end
 	Runtime:addEventListener("enterFrame", enterFrame)
 
-	scrollView:insert(self.gameView)
-	sceneGroup:insert(scrollView)
+	scene.scrollView:insert(self.gameView)
+	sceneGroup:insert(scene.scrollView)
 	sceneGroup:insert(sceneGroup.gui)
 
 end
