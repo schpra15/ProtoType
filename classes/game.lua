@@ -55,15 +55,7 @@ Game.levels = {
 			{
 				tower = 0, -- 0 = player, 1 = enemy
 				theme = 0,
-			},
-			{
-				tower = 1, -- 0 = player, 1 = enemy
-				theme = 0,
-			},
-			{
-				tower = 0, -- 0 = player, 1 = enemy
-				theme = 0,
-			},			
+			},		
 		},
 		startMoney = 1000,
 		condition = 0

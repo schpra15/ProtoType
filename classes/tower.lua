@@ -24,6 +24,8 @@ function Tower:newTower(scene, type, x, y, hp)
 
     tower.HP = hp
     tower.HPMax = hp
+	
+	tower.isDead = false
 
   	physics.addBody(tower, "static", { density=500.0, friction=100, bounce=0.0 })
 
@@ -34,9 +36,25 @@ function Tower:newTower(scene, type, x, y, hp)
   -- ------------------------------------------------
   -- Functions
   -- ------------------------------------------------
+  --- Computes the damage done to a turet
+  function tower:takeDamage(damage)
+    local totalDamage = math.max(damage, 1)
+    tower.HP = tower.HP - totalDamage
+    tower.healthBar:updateDamageBar()
+
+    local txt = Classes:newFloatText(totalDamage, tower.x, tower.y-32, 1000)
+    scene.gameView:insert(txt)
+
+    if (not tower.isDead and tower.HP <= 0) then
+      tower:die()
+    end
+  end
+  
   --- Disposes the tower instance
   function tower:die()
-    
+    tower.isDead = true
+	tower.healthBar:die()
+	scene:notifyTowerDead(tower)
   end
 
   -- ------------------------------------------------

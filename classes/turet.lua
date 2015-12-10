@@ -36,7 +36,7 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
 
     stats = (stats == nil and {
       HPMax=100,
-      damage=10,
+      damage=50,
       armor=0,
       stamina=100,
       deploycost=100,
@@ -116,21 +116,25 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
     turet.isDead = true
     if (turet.t ~= nil) then timer.cancel(turet.t) end
     transition.to(turet, { time=200, alpha=0, onComplete=function()
-        turet.healthBar:die()
-        display.remove(turet)
-        Runtime:removeEventListener("enterFrame", turet)
-        -- Remove the turet
-        for i=1, #scene.allTurets do
-          if (scene.allTurets[i] == turet) then
-              table.remove(scene.allTurets, i)
-            break
-          end
-        end
+		turet:delete()
         if (turet.type == "enemy") then
-          scene:newEnemy()
+          scene:notifyEnemyDead()
         end
       end
     })
+  end
+  
+  function turet:delete()
+	turet.healthBar:die()
+	display.remove(turet)
+	Runtime:removeEventListener("enterFrame", turet)
+	-- Remove the turet
+	for i=1, #scene.allTurets do
+	  if (scene.allTurets[i] == turet) then
+		  table.remove(scene.allTurets, i)
+		break
+	  end
+	end
   end
 
   -- ------------------------------------------------
@@ -226,11 +230,12 @@ function Turet:newBullet(scene, turet)
           event.other:takeDamage(event.target.damage)
         elseif (event.other.name == "tower") then
           event.target:die()
-          event.other.HP = event.other.HP - event.target.damage
-          local txt = Classes:newFloatText(event.target.damage, event.other.x, event.other.y-64, 1000)
-          scene.gameView:insert(txt)
+		  event.other:takeDamage(event.target.damage)
+          --event.other.HP = event.other.HP - event.target.damage
+          --local txt = Classes:newFloatText(event.target.damage, event.other.x, event.other.y-64, 1000)
+          --scene.gameView:insert(txt)
 
-          event.other.healthBar:updateDamageBar()
+          --event.other.healthBar:updateDamageBar()
           -- if (not event.other.isDead and event.other.HP <= 0) then
           --   event.other:die()
           -- end

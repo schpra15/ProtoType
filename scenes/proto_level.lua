@@ -12,13 +12,14 @@ local widget = require( "widget" )
 local scene = composer.newScene()
 scene.allTurets = {}
 scene.towers = {}
+scene.floors = {}
 
 function scene:create( event )
 	local sceneGroup = self.view
-	
+
 	-- Create the level
 	local levelData = Game.levels[Game.currentLevel]
-	Game.levelMoney = levelData.startMoney	
+	Game.levelMoney = levelData.startMoney
 
 	local music = audio.loadStream("audio/bgm_game.wav")
 	audio.play(music, {loops = -1})
@@ -32,21 +33,20 @@ function scene:create( event )
 	background:setFillColor(0,0.9,1)
 	background.x = 150
 	background.y = 100
-	--sceneGroup:insert( background )
 	self.gameView:insert(background)
-	
+
 	-- draw the ceiling
 	local ceiling = display.newImage("images/floor.png")
 	ceiling.name = "floor"
 	ceiling.x = 150
-	ceiling.y = 5
-	physics.addBody(ceiling, "static", { density=0.0, friction=.1, bounce=0.0 })
+	ceiling.y = 0
+	physics.addBody(ceiling, "static", { density=0.0, friction=0.1, bounce=0.0 })
 	self.gameView:insert(ceiling)
-	
+
 	-- Make the floors
-	local floorHeight = 150
+	local floorHeight = display.contentHeight/2
 	local levelHeight = floorHeight * #levelData.floors
-	
+
 	for i=1, #levelData.floors do
 		local floor = display.newImage("images/floor.png")
 		floor.name = "floor"
@@ -54,31 +54,20 @@ function scene:create( event )
 		floor.y = floorHeight * i
 		physics.addBody(floor, "static", { density=0.0, friction=.1, bounce=0.0 })
 		self.gameView:insert(floor)
-		
+
 		if (levelData.floors[i].tower == 0) then
 			-- Initialize the towers
-			Tower:newTower(scene, "friend", 32, floorHeight * i)	
+			table.insert(scene.towers, Tower:newTower(scene, "friend", 32, floorHeight * i - 4))
 		else
-			Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, floorHeight * i)
+			table.insert(scene.towers, Tower:newTower(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 32, floorHeight * i - 4))
 		end
+
 	end
 
-	local bottomFloor = display.newImage("images/floor.png")
-	bottomFloor.name = "floor"
-	bottomFloor.x = 150
-	bottomFloor.y = #levelData.floors * 150
-	physics.addBody(bottomFloor, "static", { density=0.0, friction=.1, bounce=0.0 })
-	self.gameView:insert(bottomFloor)
-
 	-- Initialize some enemies
-	Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 150, -1, { HPMax=100 })
+	--Turet:newMageTuret(scene, "enemy", display.contentWidth-display.screenOriginX*2 - 100, 150, -1, { HPMax=100 })
 
 	sceneGroup.gui = display.newGroup()
-	-- local moneyText = display.newEmbossedText("$"..Game.money, display.screenOriginX, 0, native.systemFontBold, 20)
-	-- 	moneyText.anchorX = 0
-	-- 	moneyText.anchorY = 0
-	-- 	moneyText:setFillColor(0, 0.7, 0, 1)
-	-- 	moneyText:setEmbossColor(GuiControls.styles.success.embrossColor)
 	local moneyText = Classes:newUpdateText("$", display.screenOriginX, 0, Game.levelMoney)
 	sceneGroup.gui:insert(moneyText)
 
@@ -99,34 +88,19 @@ function scene:create( event )
 	    height = display.contentHeight,
 	    scrollWidth = 0,
 	    scrollHeight = 100,
-			horizontalScrollDisabled = true,
+		horizontalScrollDisabled = true,
 	    listener = nil
 	}
 
+	-- initialize the enemies
+	for k,v in pairs(levelData.floors) do
+		scene:newEnemy(400, floorHeight * k-70)
+	end
+
+	Runtime:addEventListener("enterFrame", scene)
+
 	-- Set the scroll height to be the total height of the game field
 	scene.scrollView:setScrollHeight(levelHeight)
-
-	function enterFrame(event)
-		for i=1, #scene.allTurets do
-			local turetA = scene.allTurets[i]
-			for j=1, #scene.allTurets do
-				if (i ~= j) then
-					local turetB = scene.allTurets[j]
-					turetA:handleBehavior(turetB)
-					turetB:handleBehavior(turetA)
-				end
-			end
-		end
-
-		for k,v in pairs(scene.towers) do
-			if (v == nil) then
-				print (dsfafd)
-			end
-		end
-
-		moneyText:setValue(Game.levelMoney)
-	end
-	Runtime:addEventListener("enterFrame", enterFrame)
 
 	scene.scrollView:insert(self.gameView)
 	sceneGroup:insert(scene.scrollView)
@@ -165,6 +139,16 @@ end
 function scene:destroy( event )
 	local sceneGroup = self.view
 
+	Runtime:removeEventListener("enterFrame", scene)
+	print("sdsfdafsd")
+	for k,v in pairs(scene.allTurets) do
+		v:delete()
+	end
+	
+	for k,v in pairs(scene.towers) do
+		v:die()
+	end
+	
 	-- Called prior to the removal of scene's "view" (sceneGroup)
 	--
 	-- INSERT code here to cleanup the scene
@@ -172,11 +156,77 @@ function scene:destroy( event )
 end
 
 
-function scene:newEnemy(event)
-	local y = math.random(50, 200)
-	local e = Turet:newMageTuret(scene, "enemy", 400, y, -1)
-	print "enemy created"
+-- Enter frame function
+function scene:enterFrame(event)
+	for i=1, #scene.allTurets do
+		local turetA = scene.allTurets[i]
+		for j=1, #scene.allTurets do
+			if (i ~= j) then
+				local turetB = scene.allTurets[j]
+				turetA:handleBehavior(turetB)
+				turetB:handleBehavior(turetA)
+			end
+		end
+	end
+
+	for k,v in pairs(scene.towers) do
+
+	end
+
+	-- run the AI loops
+
+	--moneyText:setValue(Game.levelMoney)
+end
+
+function scene:newEnemy(x, y)
+	local e = Turet:newMageTuret(scene, "enemy", x, y, -1)
 	self.view.gui:toFront()
+end
+
+function scene:notifyTowerDead(tower)
+	for i=1, #scene.towers do
+	  if (scene.towers[i] == tower) then
+		  display.remove(tower)
+		  table.remove(scene.towers, i)
+		  
+		  if (tower.type == "friend") then
+			scene:endGame()
+		  end
+		break
+	  end
+	end
+end
+
+function scene:notifyEnemyDead()
+	-- Replenish the enemy
+
+end
+
+function scene:endGame()	
+	-- show a game over modal
+	local rektRect = display.newRect(-100,-100, 2000, 2000)
+	rektRect:setFillColor( 0, 0 , 0, 0.5 )
+	
+	rektRect:addEventListener("touch", function(e)
+		return true
+	end)
+	self.view.gui:insert(rektRect)
+	
+	local gameOverText = display.newEmbossedText("You have lost!", (display.contentWidth-display.screenOriginX) / 2, display.contentHeight/2, native.systemFontBold, 32)
+		gameOverText.anchorX = 0.5
+		gameOverText.anchorY = 0.5
+		gameOverText:setFillColor(1, 1, 1, 1)
+		gameOverText:setEmbossColor(GuiControls.styles.success.embrossColor)
+	self.view.gui:insert(gameOverText)
+	
+	local f = function(e)
+		composer.removeScene("scenes.proto_level")		
+		composer.gotoScene("scenes.proto_level")
+	end
+	
+	local btn = GuiControls:newButton((display.contentWidth-display.screenOriginX)/2, (display.contentHeight-display.screenOriginY)/2 + 48, 256, 48, "Try Again", GuiControls.styles.default, f)
+	
+	self.view:insert(btn)
 end
 
 ---------------------------------------------------------------------------------
