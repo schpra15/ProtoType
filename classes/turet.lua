@@ -7,7 +7,19 @@
 print "turet.lua initialized"
 
 Turet = {} -- Define the turet utility object
-Turet.classes = {"Fighter", "Mage", "Tank", "Support"}
+Turet.classes = {"Fighter", "Ranger", "Tank", "Support"}
+
+function Turet:newTuretByClass(scene, class, type, x, y, direction, stats)
+  if (class == "Ranger") then
+    return Turet:newRangerTuret(scene, type, x, y, direction, stats)
+  elseif (class == "Tank") then
+    return Turet:newTankTuret(scene, type, x, y, direction, stats)
+  elseif (class == "Support") then
+    return Turet:newSupportTuret(scene, type, x, y, direction, stats)
+  end
+
+  return Turet:newTuret(scene, type, x, y, direction, stats)
+end
 
 function Turet:newTuret(scene, type, x, y, direction, stats)
 
@@ -52,12 +64,11 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
     turet.deathReward = (stats.deathReward ~= nil and stats.deathReward or 10)
     turet.ability = nil
 
-
     turet.isDragging = false
     turet.isDead = false
     turet.direction = direction
     -- Add this as a physics body
-    physics.addBody( turet, "dynamic", { density=50.0, friction=1, bounce=0.0, filter=turet.filter })
+    physics.addBody( turet, "dynamic", { density=50.0, friction=2, bounce=0.0, filter=turet.filter })
 
     -- Add the event listeners
     if (turet.type == "friend") then
@@ -72,11 +83,16 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
   -- on the class of turet.
   -- ------------------------------------------------
   function turet:handleBehavior(otherTuret)
-    if (math.abs(turet.x - otherTuret.x) < 100) then
+    if (math.abs(turet.x - otherTuret.x) < 70) then
       --stop the Turets
       if (turet.setLinearVelocity~=nil) then
         local vx, vy = turet:getLinearVelocity()
         turet:setLinearVelocity(0, vy)
+      end
+    else
+      if (turet.setLinearVelocity~=nil) then
+        local vx, vy = turet:getLinearVelocity()
+        turet:setLinearVelocity(20, vy)
       end
     end
   end
@@ -110,7 +126,8 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
     print("Death Reward $: "..turet.deathReward)
   end
 
-  --- Removes the turet from the game.
+  --- Removes the turet from the game, using a
+  -- transition.
   -- ------------------------------------------------
   function turet:die()
     turet.isDead = true
@@ -118,23 +135,24 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
     transition.to(turet, { time=200, alpha=0, onComplete=function()
 		turet:delete()
         if (turet.type == "enemy") then
-          scene:notifyEnemyDead()
+          scene:notifyEnemyDead(turet)
         end
       end
     })
   end
-  
+
+  --- Removes the turet immediately from the game.
+  -- ------------------------------------------------
   function turet:delete()
-	turet.healthBar:die()
-	display.remove(turet)
-	Runtime:removeEventListener("enterFrame", turet)
-	-- Remove the turet
-	for i=1, #scene.allTurets do
-	  if (scene.allTurets[i] == turet) then
-		  table.remove(scene.allTurets, i)
-		break
-	  end
-	end
+  	turet.healthBar:die()
+  	display.remove(turet)
+  	-- Remove the turet
+  	for i=1, #scene.turets do
+  	  if (scene.turets[i] == turet) then
+  		  table.remove(scene.turets, i)
+  		break
+  	  end
+  	end
   end
 
   -- ------------------------------------------------
@@ -171,6 +189,10 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
       turet.isDragging = false
       physics.addBody( turet, "dynamic", { density=100.0, friction=1, bounce=0.0, filter=turet.filter })
       transition.to( turet, { time=200, xScale = 1, yScale = 1 })
+
+      if (turet.x > display.contentWidth/2) then
+        transition.to( turet, { time=200, x = display.contentWidth/2 })
+      end
     end
     return true  --prevents touch propagation to underlying objects
   end
@@ -179,28 +201,31 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
 
   scene.gameView:insert(turet)
   scene.gameView:insert(turet.healthBar)
-  table.insert(scene.allTurets, turet)
+  table.insert(scene.turets, turet)
 
   return turet
 end
-
---- Declare a Mage Turet "class"
+--------------------------------------------------------------------------------------------------------------
+--- Declare a Tank Turet "class"
 -- NOTE: This is not true inheritance.  Constructors will have to
 -- be re-invoked, but all other function can be called and overriden.
-function Turet:newMageTuret(scene, type, x, y, direction, stats)
+function Turet:newTankTuret(scene, type, x, y, direction, stats)
   local turet = Turet:newTuret(scene, type, x, y, direction, stats)
   turet.t = {}
 
   function turet:construct()
-    turet.class = "Mage"
-    turet.t = timer.performWithDelay(1000, turet.t, -1)
+    turet.class = "Tank"
   end
 
   function turet.t:timer(event)
     if (turet.isDragging) then return end
-    local bullet = Turet:newBullet(scene, turet)
+  end
 
-    turet:setLinearVelocity(turet.direction*20, 0)
+  --- Represents the turet's behavior, which varies based
+  -- on the class of turet.
+  -- ------------------------------------------------
+  function turet:handleBehavior(otherTuret)
+
   end
 
   turet:construct()
@@ -208,8 +233,174 @@ function Turet:newMageTuret(scene, type, x, y, direction, stats)
   return turet
 end
 
+--------------------------------------------------------------------------------------------------------------
+--- Declare a Ranger Turet "class"
+-- NOTE: This is not true inheritance.  Constructors will have to
+-- be re-invoked, but all other function can be called and overriden.
+function Turet:newRangerTuret(scene, type, x, y, direction, stats)
+  local turet = Turet:newTuret(scene, type, x, y, direction, stats)
+  turet.t = {}
+  turet.isTuretNear = false
+
+  function turet:construct()
+    turet.class = "Ranger"
+    turet.t = timer.performWithDelay(1000, turet.t, -1)
+  end
+
+  function turet.t:timer(event)
+    if (turet.isDragging) then return end
+    local bullet = Turet:newBullet(scene, turet)
+
+    --turet:setLinearVelocity(turet.direction*20, 0)
+  end
+
+  --- Represents the turet's behavior, which varies based
+  -- on the class of turet.
+  -- ------------------------------------------------
+  function turet:handleBehavior(otherTuret)
+    if (math.abs(turet.x - otherTuret.x) < 500 and math.abs(turet.y - otherTuret.y) < 100 and turet.type ~= otherTuret.type) then
+      turet.isTuretNear = true
+      --stop the Turets
+      -- if (turet.setLinearVelocity~=nil) then
+      --   local vx, vy = turet:getLinearVelocity()
+      --   turet:setLinearVelocity(0, vy)
+      -- end
+    else
+      turet.isTuretNear = false
+    end
+  end
+
+  function turet:delete()
+    turet.healthBar:die()
+    timer.cancel(turet.t)
+    print('timer removed')
+    display.remove(turet)
+    -- Remove the turet
+    for i=1, #scene.turets do
+      if (scene.turets[i] == turet) then
+        table.remove(scene.turets, i)
+      break
+      end
+    end
+  end
+
+  turet:construct()
+
+  return turet
+end
+
+--------------------------------------------------------------------------------------------------------------
+--- Declare a Support Turet "class"
+-- NOTE: This is not true inheritance.  Constructors will have to
+-- be re-invoked, but all other function can be called and overriden.
+function Turet:newSupportTuret(scene, type, x, y, direction, stats)
+  local turet = Turet:newTuret(scene, type, x, y, direction, stats)
+  turet.t = {}
+  turet.isTuretNear = false
+
+  function turet:construct()
+    turet.class = "Support"
+    turet.t = timer.performWithDelay(3000, turet.t, -1)
+  end
+
+  function turet.t:timer(event)
+    if (turet.isDragging) then return end
+
+    -- create a healing force field
+    Turet:newHealField(scene, turet)
+  end
+
+  --- Represents the turet's behavior, which varies based
+  -- on the class of turet.
+  -- ------------------------------------------------
+  function turet:handleBehavior(otherTuret)
+    if (math.abs(turet.x - otherTuret.x) < 500 and math.abs(turet.y - otherTuret.y) < 100 and turet.type ~= otherTuret.type) then
+      turet.isTuretNear = true
+      --stop the Turets
+      -- if (turet.setLinearVelocity~=nil) then
+      --   local vx, vy = turet:getLinearVelocity()
+      --   turet:setLinearVelocity(0, vy)
+      -- end
+    else
+      turet.isTuretNear = false
+    end
+  end
+
+  turet:construct()
+
+  return turet
+end
+
+--------------------------------------------------------------------------------------------------------------
+--- Declare a Heal Field "class"
+-- This will be fired by Ranger turets.
+function Turet:newHealField(scene, turet)
+  local healField = display.newCircle(0, 0, 50)
+  healField.name = "healField"
+  healField.x = turet.x
+  healField.y = turet.y
+  healField.type = turet.type
+  healField.damage = turet.damage
+
+  transition.to( healField, { time=2000, xScale=2, yScale=2, alpha=0, onComplete=function(e)
+    healField:die()
+  end })
+
+  function healField:collision(event)
+    --event.contact.isEnabled = false
+    if event.phase=="began" then
+      if event.target.type == event.other.type then
+        if (event.other.name == "turet" and event.other ~= turet) then
+          -- heal it
+          self:healObject(event.other)
+        elseif (event.other.name == "tower") then
+          -- heal it
+            self:healObject(event.other)
+        end
+      end
+      return true
+    end
+  end
+
+  function healField:healObject(obj)
+    if (obj.HP + self.damage > obj.HPMax) then
+      obj.HP = obj.HPMax
+    else
+      obj.HP = obj.HP + self.damage
+    end
+    obj.healthBar:updateDamageBar()
+
+    local txt = Classes:newFloatText(self.damage, obj.x, obj.y-32, 1000)
+    txt:setFillColor(0,1,0,1)
+    scene.gameView:insert(txt)
+  end
+
+  function healField:enterFrame(event)
+    --healField:scale(2, 2)
+  end
+
+  function healField:die(event)
+    Runtime:removeEventListener("enterFrame", healField)
+    display.remove(healField)
+    scene:removeObject(healField)
+  end
+
+  healField:addEventListener("collision", healField)
+  physics.addBody(healField, "dynamic", { density=1.0, friction=0, bounce=0.0 })
+  healField.isSensor = true
+  healField.gravityScale = 0
+  Runtime:addEventListener("enterFrame", healField)
+
+  scene.gameView:insert(healField)
+  table.insert(scene.objects, healField)
+
+  return healField
+end
+
+
+--------------------------------------------------------------------------------------------------------------
 --- Declare a Bullet "class"
--- This will be fired by Mage turets.
+-- This will be fired by Ranger turets.
 function Turet:newBullet(scene, turet)
   local bullet = display.newRect(0, 0, 16, 8)
   bullet.name = "bullet"
@@ -230,15 +421,7 @@ function Turet:newBullet(scene, turet)
           event.other:takeDamage(event.target.damage)
         elseif (event.other.name == "tower") then
           event.target:die()
-		  event.other:takeDamage(event.target.damage)
-          --event.other.HP = event.other.HP - event.target.damage
-          --local txt = Classes:newFloatText(event.target.damage, event.other.x, event.other.y-64, 1000)
-          --scene.gameView:insert(txt)
-
-          --event.other.healthBar:updateDamageBar()
-          -- if (not event.other.isDead and event.other.HP <= 0) then
-          --   event.other:die()
-          -- end
+	        event.other:takeDamage(event.target.damage)
         end
       end
       return true
@@ -252,8 +435,9 @@ function Turet:newBullet(scene, turet)
   end
 
   function bullet:die(event)
-    display.remove(bullet)
     Runtime:removeEventListener("enterFrame", bullet)
+    display.remove(bullet)
+    scene:removeObject(bullet)
   end
 
   bullet:addEventListener("collision", bullet)
@@ -264,6 +448,7 @@ function Turet:newBullet(scene, turet)
   Runtime:addEventListener("enterFrame", bullet)
 
   scene.gameView:insert(bullet)
+  table.insert(scene.objects, bullet)
 
   return bullet
 end

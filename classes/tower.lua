@@ -24,8 +24,8 @@ function Tower:newTower(scene, type, x, y, hp)
 
     tower.HP = hp
     tower.HPMax = hp
-	
-	tower.isDead = false
+
+    tower.isDead = false
 
   	physics.addBody(tower, "static", { density=500.0, friction=100, bounce=0.0 })
 
@@ -49,12 +49,12 @@ function Tower:newTower(scene, type, x, y, hp)
       tower:die()
     end
   end
-  
+
   --- Disposes the tower instance
   function tower:die()
     tower.isDead = true
-	tower.healthBar:die()
-	scene:notifyTowerDead(tower)
+  	tower.healthBar:die()
+  	scene:notifyTowerDead(tower)
   end
 
   -- ------------------------------------------------

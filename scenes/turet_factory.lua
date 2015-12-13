@@ -86,9 +86,9 @@ function scene:show( event )
 		-- e.g. start timers, begin animation, play audio, etc.
 		-- Animate the initial transition
 		transition.from(sceneGroup, {
-				time = 1000,
+				time = 500,
 				x = display.contentWidth*2,
-				transition = easing.inOutExpo,
+				--transition = easing.inOutExpo,
 				onComplete = function()
 				end
 			}
@@ -144,7 +144,7 @@ function createTuretListView()
 		-- Assuming the turets take up an 36x36 square
 		local page = 0
 		local padding = 32
-		local xSlots = 5--math.floor((myTuretsBase.width-padding*2)/36)
+		local xSlots = 4--math.floor((myTuretsBase.width-padding*2)/36)
 		local xSpacing = (myTuretsBase.width-padding*2)/(xSlots)
 		local ySlots = 3--(myTuretsBase.height-padding*2)/(36+padding)
 
@@ -169,7 +169,7 @@ function createTuretListView()
 							turetIcon:setFillColor(1,1,0)
 						elseif (t.class == "Support") then
 							turetIcon:setFillColor(0,0,1)
-						elseif (t.class == "Mage") then
+						elseif (t.class == "Ranger") then
 							turetIcon:setFillColor(0,1,0)
 						end
 
@@ -284,8 +284,8 @@ function createNewTuretView()
 	description:setEmbossColor(color)
 	viewGroup:insert(description)
 
-	local mageButton = GuiControls:newButton(display.screenOriginX+50, 210, 100, 24, "Mage", GuiControls.styles.success, function(event)
-		currentTuret.class = "Mage"
+	local mageButton = GuiControls:newButton(display.screenOriginX+50, 210, 100, 24, "Ranger", GuiControls.styles.success, function(event)
+		currentTuret.class = "Ranger"
 		local modal = newInputModal("Please enter a name for your new turet:", function(event)
 			currentTuret.turetName = event.inputValue
 			print(currentTuret.turetName)
@@ -296,7 +296,7 @@ function createNewTuretView()
 	)
 	viewGroup:insert(mageButton)
 
-	description = display.newEmbossedText( "These turets can attack with special spells that can cause status ailments.", display.screenOriginX+120, 210, native.systemFont, 10 )
+	description = display.newEmbossedText( "These turets can attack from far away, but with less power.", display.screenOriginX+120, 210, native.systemFont, 10 )
 	description.anchorX = 0
 	description.anchorY = 0.5
 	description:setFillColor(0, 0, 0)
@@ -360,7 +360,7 @@ function createNewTuretView2()
 		turetIcon:setFillColor(1,1,0)
 	elseif (currentTuret.class == "Support") then
 		turetIcon:setFillColor(0,0,1)
-	elseif (currentTuret.class == "Mage") then
+	elseif (currentTuret.class == "Ranger") then
 		turetIcon:setFillColor(0,1,0)
 	end
 	turetIcon.x = display.screenOriginX+150

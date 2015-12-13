@@ -17,17 +17,24 @@ function scene:create( event )
 	-- Defines the menus of the screen
 	local menus = {
 		{
-			title="Single Player",
+			title="Campaign",
 			action=function(event)
-				print "Single Player"
-				composer.gotoScene("scenes.proto_level")
+				Game.gamplayMode = 0
+				composer.gotoScene("scenes.level_select")
 			end
 		},
+		-- {
+		-- 	title="Survival",
+		-- 	action=function(event)
+		-- 		Game.gamplayMode = 1
+		-- 		composer.gotoScene("scenes.level")
+		-- 	end
+		-- },
 		{
 			title="Turet Factory",
 			action=function(event)
 				transition.to(sceneGroup, {
-						time = 1000,
+						time = 500,
 						x = display.contentWidth*2,
 						transition = easing.inOutExpo,
 						onComplete = function()
@@ -52,33 +59,8 @@ function scene:create( event )
 
 	-- Create the menu buttons
 	for k,v in pairs(menus) do
-
-		local btn = GuiControls:newButton(display.contentWidth/2, display.contentHeight/2 + 56*(k-1), 256, 48, v.title, GuiControls.styles.default, v.action)--display.newGroup()
+		local btn = GuiControls:newButton(display.contentWidth/2, display.contentHeight/2 + 44*(k-1), 256, 32, v.title, GuiControls.styles.default, v.action)
 		sceneGroup:insert(btn)
-
-		-- local btnBase = display.newRect(btn, 0,0,256,48)
-		-- btn.anchorX = 0.5
-		-- btn.anchorY = 0.5
-		-- btn.x = display.contentWidth/2
-		-- btn.y = display.contentHeight/2 + 56*(k-1)
-		--
-		-- local btnText = display.newEmbossedText( btn, v.title , 0, 0, native.systemFontBold, 20 )
-		-- btnText:setFillColor( 0.6, 0.6, 0.6 )
-		-- btnText:setEmbossColor({ highlight={ r=0, g=0, b=0 }})
-		--
-		-- btn:addEventListener("touch", function(event)
-		-- 		if event.phase == "began" then
-		--       display.getCurrentStage():setFocus( event.target, event.id )
-		-- 			transition.to( btn, {time=50, xScale=0.95, yScale=0.95})
-		-- 		elseif event.phase == "ended" then
-		-- 		    display.getCurrentStage():setFocus( nil, event.id )
-		-- 				transition.to( btn, {time=50, xScale=1, yScale=1})
-		-- 				v.action(event)
-		-- 		end
-		-- 		return true
-		-- 	end
-		-- )
-
 	end
 
 	-- all objects must be added to group (e.g. self.view)

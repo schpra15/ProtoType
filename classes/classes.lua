@@ -76,13 +76,13 @@ end
 -----------------------------------------------------------------------------
 --- Creates text that will update its value when the value is changed.  It
 -- will have a numeric scrolling effect.
-function Classes:newUpdateText(text, x, y, value)
+function Classes:newUpdateText(text, x, y, style, value)
 
   local txt = display.newEmbossedText(text..value, x, y, native.systemFontBold, 20)
     txt.anchorX = 0
     txt.anchorY = 0
-    txt:setFillColor(0, 0.7, 0, 1)
-    txt:setEmbossColor(GuiControls.styles.success.embrossColor)
+    txt:setFillColor(unpack(style.textColor))
+    txt:setEmbossColor(style.embrossColor)
 
     txt.displayValue = value
     txt.newValue = value

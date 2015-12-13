@@ -16,6 +16,12 @@ GuiControls.styles = {
 		textColor = { 0.6, 0.6, 0.6, 1 },
 		embrossColor = { highlight={ r=0, g=0, b=0 } }
 	},
+	default_disabled = {
+		strokeColor = { 0.7, 0.7, 0.7, 1 },
+		fillColor = { 0.81, 0.81, 0.81, 1 },
+		textColor = { 0.6, 0.6, 0.6, 1 },
+		embrossColor = { highlight={ r=0, g=0, b=0 } }
+	},
 	primary = {
 		strokeColor = { 0, 0, 0.9, 1 },
 		fillColor = { 0, 0, 1, 1 },
@@ -64,11 +70,13 @@ function GuiControls:newButton(x, y, width, height, text, style, onTouchEvent)
 	btn.anchorY = 0.5
 
 	btn.isPressed = false
+	btn.isEnabled = true
 
 	btn:addEventListener("touch", function(event)
+			if not btn.isEnabled then return end
 			if event.phase == "began" then
 				display.getCurrentStage():setFocus( event.target, event.id )
-				transition.to(grp, {time=50, xScale=0.95, yScale=0.95})
+				transition.to(grp, {time=50, xScale=0.98, yScale=0.98})
 				btn.isPressed = true
 			elseif event.phase == "ended" and btn.isPressed then
 				display.getCurrentStage():setFocus( nil, event.id )
@@ -76,6 +84,8 @@ function GuiControls:newButton(x, y, width, height, text, style, onTouchEvent)
 				onTouchEvent(event)
 				btn.isPressed = false
 			end
+
+			return true
 		end
 	)
 
@@ -85,6 +95,11 @@ function GuiControls:newButton(x, y, width, height, text, style, onTouchEvent)
 	txt:setFillColor(unpack(style.textColor))
 	txt:setEmbossColor(style.embrossColor)
 
+
+	function grp:setEnabled(enabled)
+		btn.isEnabled = enabled
+	end
+
 	return grp
 end
 
@@ -93,7 +108,7 @@ function GuiControls:newGuiTuretMenu(scene)
 
 	local menu = display.newGroup()
 	local turetListing = display.newGroup()
-	local turetListingBase = display.newRect(turetListing, 0, 16, 256, 200)
+	local turetListingBase = display.newRect(turetListing, 0, 16, 460, 200)
 	local guiButton = display.newGroup()
 	local guiButtonBase = display.newRect(guiButton, 0, 16, 96, 32)
 	local guiButtonText = display.newText(guiButton, "+ Turet", 16, 0, native.systemFont, 12)
@@ -101,6 +116,8 @@ function GuiControls:newGuiTuretMenu(scene)
 	-- Initialization
 	---------------------------------------------------------------------------
 	function menu:construct()
+		local totalCols = 4
+
 		guiButtonText:setFillColor(0)
 		guiButton.anchorX = 0
 		guiButton.anchorY = 0
@@ -123,13 +140,16 @@ function GuiControls:newGuiTuretMenu(scene)
 
 		-- Add the different turets to the menu
 		for k, v in pairs(Game.myTurets) do
-			local box = display.newImage(turetListing, "images/friends.png", 48*(k-1) + 32, -(turetListing.height-80))
+			local row = (k > totalCols and 2 or 1)
+			local col = k - totalCols*(row-1)
+
+			local box = display.newImage(turetListing, "images/friends.png", 96*(col-1) + 64, -(turetListing.height-80*row))
 			box.anchorX = 0
 			box.anchorY = 1
 			box.holdCount = -1
-			local text = display.newText(turetListing, v.turetName, 48*(k-1) + 32, box.y, native.systemFont, 12)
+			local text = display.newText(turetListing, v.turetName, box.x+12, box.y, native.systemFont, 10)
 			text:setFillColor(0)
-			text.anchorX = 0
+			text.anchorX = 0.5
 			-- Give the turet button a touch event, so the player can spawn it
 			-- The player will need to hold down his/her finger on the turet
 			-- icon and drag in order to spawn it.  Pressing and releasing will
@@ -142,16 +162,22 @@ function GuiControls:newGuiTuretMenu(scene)
 						return
 					end
 					box.holdCount = box.holdCount + 1
-					if box.holdCount > 1 then						
+					if box.holdCount > 1 then
 						local x, y = scene.scrollView:getContentPosition()
-					
+
 						if (Game.levelMoney - v.deployCost < 0) then
 							-- Throw code in here as a warning
 
-						elseif (v.class == "Mage") then
+						elseif (v.class == "Ranger") then
 								-- We have to offset the x position because of the scrollview's offset.
 								-- The GUI control is not part of the scrollview, so its positioning is different.
-								local t = Turet:newMageTuret(scene, "friend", event.x-display.screenOriginX, event.y - y, 1, v)
+								local t = Turet:newRangerTuret(scene, "friend", event.x-display.screenOriginX, event.y - y, 1, v)
+								Game.levelMoney = Game.levelMoney - v.deployCost
+								hideTuretMenu()
+						elseif (v.class == "Support") then
+								-- We have to offset the x position because of the scrollview's offset.
+								-- The GUI control is not part of the scrollview, so its positioning is different.
+								local t = Turet:newSupportTuret(scene, "friend", event.x-display.screenOriginX, event.y - y, 1, v)
 								Game.levelMoney = Game.levelMoney - v.deployCost
 								hideTuretMenu()
 						else
