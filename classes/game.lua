@@ -71,9 +71,19 @@ Game.levels = {
 		},
     enemies = {
       {
+        turetName = "Default-Fighter",
+        class = "Fighter",
+        HPMax = 80,
+        damage = 8,
+        armor = 0,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 8
+      },
+      {
         turetName = "Default-Ranger",
         class = "Ranger",
-        HPMax = 100,
+        HPMax = 80,
         damage = 5,
         armor = 0,
         stamina = 100,
@@ -106,9 +116,19 @@ Game.levels = {
     },
     enemies = {
       {
+        turetName = "Default-Fighter",
+        class = "Fighter",
+        HPMax = 80,
+        damage = 10,
+        armor = 0,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 8
+      },
+      {
         turetName = "Default-Ranger",
         class = "Ranger",
-        HPMax = 100,
+        HPMax = 80,
         damage = 6,
         armor = 0,
         stamina = 100,
@@ -141,10 +161,20 @@ Game.levels = {
     },
     enemies = {
       {
+        turetName = "Default-Fighter",
+        class = "Fighter",
+        HPMax = 80,
+        damage = 10,
+        armor = 0,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 8
+      },
+      {
         turetName = "Default-Ranger",
         class = "Ranger",
-        HPMax = 100,
-        damage = 5,
+        HPMax = 80,
+        damage = 6,
         armor = 0,
         stamina = 100,
         deployCost = 20,
@@ -153,6 +183,126 @@ Game.levels = {
     },
     startEnemyMoney = 50,
     descText = "Protect two towers!",
+    startMoney = 100,
+    condition = 0,
+    isUnlocked = false,
+    isCleared = false,
+  },
+  -- Level 4: Protect two towers!
+  {
+    floors = {
+      {
+        tower = 0, -- 0 = player, 1 = enemy
+        theme = 0,
+      },
+      {
+        tower = 1, -- 0 = player, 1 = enemy
+        theme = 0,
+      },
+      {
+        tower = 0, -- 0 = player, 1 = enemy
+        theme = 0,
+      },
+    },
+    enemies = {
+      {
+        turetName = "Default-Fighter",
+        class = "Fighter",
+        HPMax = 80,
+        damage = 10,
+        armor = 0,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 8
+      },
+      {
+        turetName = "Default-Ranger",
+        class = "Ranger",
+        HPMax = 80,
+        damage = 6,
+        armor = 0,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 5
+      },
+      {
+        turetName = "Default-Tank",
+        class = "Tank",
+        HPMax = 80,
+        damage = 6,
+        armor = 1,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 5
+      },
+    },
+    startEnemyMoney = 100,
+    descText = "Now add tanks!",
+    startMoney = 100,
+    condition = 0,
+    isUnlocked = false,
+    isCleared = false,
+  },
+  -- Level 5: Protect two towers!
+  {
+    floors = {
+      {
+        tower = 0, -- 0 = player, 1 = enemy
+        theme = 0,
+      },
+      {
+        tower = 1, -- 0 = player, 1 = enemy
+        theme = 0,
+      },
+      {
+        tower = 0, -- 0 = player, 1 = enemy
+        theme = 0,
+      },
+    },
+    enemies = {
+      {
+        turetName = "Default-Fighter",
+        class = "Fighter",
+        HPMax = 80,
+        damage = 10,
+        armor = 0,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 8
+      },
+      {
+        turetName = "Default-Ranger",
+        class = "Ranger",
+        HPMax = 80,
+        damage = 6,
+        armor = 0,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 5
+      },
+      {
+        turetName = "Default-Tank",
+        class = "Tank",
+        HPMax = 80,
+        damage = 6,
+        armor = 1,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 5
+      },
+      {
+        turetName = "Default-Support",
+        class = "Support",
+        HPMax = 50,
+        damage = 6,
+        armor = 0,
+        stamina = 100,
+        deployCost = 20,
+        deathReward = 5
+      },
+    },
+    startEnemyMoney = 100,
+    descText = "Now add Healers!",
     startMoney = 100,
     condition = 0,
     isUnlocked = false,

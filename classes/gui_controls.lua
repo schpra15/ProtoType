@@ -168,22 +168,11 @@ function GuiControls:newGuiTuretMenu(scene)
 						if (Game.levelMoney - v.deployCost < 0) then
 							-- Throw code in here as a warning
 
-						elseif (v.class == "Ranger") then
-								-- We have to offset the x position because of the scrollview's offset.
-								-- The GUI control is not part of the scrollview, so its positioning is different.
-								local t = Turet:newRangerTuret(scene, "friend", event.x-display.screenOriginX, event.y - y, 1, v)
-								Game.levelMoney = Game.levelMoney - v.deployCost
-								hideTuretMenu()
-						elseif (v.class == "Support") then
-								-- We have to offset the x position because of the scrollview's offset.
-								-- The GUI control is not part of the scrollview, so its positioning is different.
-								local t = Turet:newSupportTuret(scene, "friend", event.x-display.screenOriginX, event.y - y, 1, v)
-								Game.levelMoney = Game.levelMoney - v.deployCost
-								hideTuretMenu()
 						else
-								local t = Turet:newTuret(scene, "friend", event.x-display.screenOriginX, event.y - y, 1, v)
-								Game.levelMoney = Game.levelMoney - v.deployCost
-								hideTuretMenu()
+							local t = Turet:newTuretByClass(scene, v.class, "friend", event.x-display.screenOriginX, event.y - y, 1, v)
+							audio.play(Turet.summonSound)
+							Game.levelMoney = Game.levelMoney - v.deployCost
+							hideTuretMenu()
 						end
 
 						box.holdCount = -1

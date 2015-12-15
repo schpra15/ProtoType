@@ -9,10 +9,14 @@
 local composer = require( "composer" )
 
 local scene = composer.newScene()
+local music = audio.loadStream("audio/bgm_main_theme.ogg")
+local musicStream
 
 function scene:create( event )
 	local sceneGroup = self.view
 	-- Called when the scene's view does not exist.
+	
+	musicStream = audio.play(music, {loops = -1})
 
 	-- Defines the menus of the screen
 	local menus = {
@@ -93,6 +97,7 @@ function scene:hide( event )
 	local sceneGroup = self.view
 	local phase = event.phase
 
+	
 	if event.phase == "will" then
 		-- Called when the scene is on screen and is about to move off screen
 		--
@@ -100,6 +105,9 @@ function scene:hide( event )
 		-- e.g. stop timers, stop animation, unload sounds, etc.)
 	elseif phase == "did" then
 		-- Called when the scene is now off screen
+		audio.stop(musicStream)
+		--audio.dispose(music)
+		--music = nil
 	end
 end
 

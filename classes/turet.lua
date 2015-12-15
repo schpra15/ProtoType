@@ -8,6 +8,12 @@ print "turet.lua initialized"
 
 Turet = {} -- Define the turet utility object
 Turet.classes = {"Fighter", "Ranger", "Tank", "Support"}
+Turet.healSound = audio.loadSound("audio/Healing.wav")
+Turet.meleeSound = audio.loadSound("audio/Melee.wav")
+Turet.shootSound = audio.loadSound("audio/Shooting.wav")
+Turet.summonSound = audio.loadSound("audio/Summon.wav")
+Turet.dyingSound = audio.loadSound("audio/Dying.wav")
+Turet.hitSound = audio.loadSound("audio/Dying2.wav")
 
 function Turet:newTuretByClass(scene, class, type, x, y, direction, stats)
   if (class == "Ranger") then
@@ -18,22 +24,23 @@ function Turet:newTuretByClass(scene, class, type, x, y, direction, stats)
     return Turet:newSupportTuret(scene, type, x, y, direction, stats)
   end
 
-  return Turet:newTuret(scene, type, x, y, direction, stats)
+  return Turet:newFighterTuret(scene, type, x, y, direction, stats)
 end
 
-function Turet:newTuret(scene, type, x, y, direction, stats)
+function Turet:newTuret(scene, body, type, x, y, direction, stats)
 
   local turet = display.newGroup()
   turet.name = "turet"
   turet.x = x
   turet.y = y
+  turet:insert(body)
+  turet.body = body
+
   if (type == "friend") then
-    turet.body = display.newImage(turet, "images/turet.png", 0, 0)
     turet.body.xScale = -direction
     turet.filter = { groupIndex = -2 }
     turet.bulletFilter = { groupIndex = -2 }
   else
-    turet.body = display.newImage(turet, "images/turet.png", 0, 0)
     turet.body.xScale = -direction
     turet.filter = { groupIndex = -3 }
     turet.bulletFilter = { groupIndex = -3 }
@@ -131,9 +138,9 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
   -- ------------------------------------------------
   function turet:die()
     turet.isDead = true
-    if (turet.t ~= nil) then timer.cancel(turet.t) end
+    audio.play(Turet.dyingSound)
     transition.to(turet, { time=200, alpha=0, onComplete=function()
-		turet:delete()
+		    turet:delete()
         if (turet.type == "enemy") then
           scene:notifyEnemyDead(turet)
         end
@@ -145,7 +152,9 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
   -- ------------------------------------------------
   function turet:delete()
   	turet.healthBar:die()
+    if (turet.t ~= nil) then timer.cancel(turet.t) end
   	display.remove(turet)
+
   	-- Remove the turet
   	for i=1, #scene.turets do
   	  if (scene.turets[i] == turet) then
@@ -206,19 +215,129 @@ function Turet:newTuret(scene, type, x, y, direction, stats)
   return turet
 end
 --------------------------------------------------------------------------------------------------------------
+--- Declare a Fighter Turet "class"
+-- NOTE: This is not true inheritance.  Constructors will have to
+-- be re-invoked, but all other function can be called and overriden.
+function Turet:newFighterTuret(scene, type, x, y, direction, stats)
+  local sheet = graphics.newImageSheet("images/fighter.png", { width = 77, height=64, numFrames=4 })
+  local sequenceData = {
+    {
+      name = "idle",
+      start = 1,
+      count = 1,
+      time= 1000,
+      loopCount = 0
+    },
+    {
+      name = "attack",
+      start = 1,
+      count = 4,
+      time = 1000,
+      loopCount = 0
+    }
+  }
+  local body = display.newSprite(sheet, sequenceData)
+  body:setSequence("idle")
+  body:play()
+
+  local turet = Turet:newTuret(scene, body, type, x, y, direction, stats)
+  turet.target = nil
+  turet.minDist = 99999
+  turet.isAttacking = false
+
+  function turet:construct()
+    turet.class = "Fighter"
+  end
+
+  --- Represents the turet's behavior, which varies based
+  -- on the class of turet.
+  -- ------------------------------------------------
+  function turet:handleBehavior(otherTuret)
+    --local dist = math.sqrt(math.pow(math.abs(turet.x - otherTuret.x),2) + math.pow(math.abs(turet.y - otherTuret.y),2))
+    -- if (dist < turet.minDist and otherTuret.type == "enemy") then
+    --   turet.minDist = dist
+    --   turet.target = otherTuret
+    -- end
+    -- if (turet.target and math.abs(turet.x - turet.target.x) > 100) then
+    --   turet.isAttacking = false
+    --   body:setSequence("idle")
+    --   body:play()
+    -- end
+
+    if (turet.setLinearVelocity~=nil and not turet.isAttacking) then
+      local vx, vy = turet:getLinearVelocity()
+      local vel = 30 * turet.direction
+      turet:setLinearVelocity(vel, vy)
+    else
+      --stop the Turets
+        if (turet.setLinearVelocity~=nil) then
+          local vx, vy = turet:getLinearVelocity()
+          turet:setLinearVelocity(0, vy)
+        end
+    end
+  end
+
+  function turet:collision(event)
+      if event.phase=="began" then
+        if event.target.type ~= event.other.type and (event.other.name == "turet" or event.other.name == "tower") then
+          --if (event.other == turet.target) then
+            turet.target = event.other
+            turet.isAttacking = true
+            body:setSequence("attack")
+            body:play()
+          --end
+        end
+      end
+  end
+
+  function body:sprite(event)
+    if (turet.target ~= nil) then
+      if (event.phase == "loop") then
+        if (turet.target.HP > 0) then
+          turet.target:takeDamage(turet.damage)
+          audio.play(Turet.hitSound)
+        else
+          turet.target = nil
+          turet.isAttacking = false
+          body:setSequence("idle")
+          body:play()
+        end
+      end
+    end
+  end
+
+  turet:addEventListener("collision", turet)
+  body:addEventListener("sprite", body)
+
+  turet:construct()
+
+  return turet
+end
+
+--------------------------------------------------------------------------------------------------------------
 --- Declare a Tank Turet "class"
 -- NOTE: This is not true inheritance.  Constructors will have to
 -- be re-invoked, but all other function can be called and overriden.
 function Turet:newTankTuret(scene, type, x, y, direction, stats)
-  local turet = Turet:newTuret(scene, type, x, y, direction, stats)
-  turet.t = {}
+  local sheet = graphics.newImageSheet("images/tank.png", { width = 50, height=64, numFrames=1 })
+
+  local sequenceData = {
+    {
+      name = "idle",
+      start = 1,
+      count = 1,
+      time= 1000,
+      loopCount = 0
+    }
+  }
+  local body = display.newSprite(sheet, sequenceData)
+  body:setSequence("idle")
+  body:play()
+
+  local turet = Turet:newTuret(scene, body, type, x, y, direction, stats)
 
   function turet:construct()
     turet.class = "Tank"
-  end
-
-  function turet.t:timer(event)
-    if (turet.isDragging) then return end
   end
 
   --- Represents the turet's behavior, which varies based
@@ -238,7 +357,28 @@ end
 -- NOTE: This is not true inheritance.  Constructors will have to
 -- be re-invoked, but all other function can be called and overriden.
 function Turet:newRangerTuret(scene, type, x, y, direction, stats)
-  local turet = Turet:newTuret(scene, type, x, y, direction, stats)
+  local sheet = graphics.newImageSheet("images/archer.png", { width = 42, height=64, numFrames=4 })
+  local sequenceData = {
+    {
+      name = "idle",
+      start = 1,
+      count = 1,
+      time= 1000,
+      loopCount = 0
+    },
+    {
+      name = "attack",
+      start = 2,
+      count = 3,
+      time = 200,
+      loopCount = 1
+    }
+  }
+  local body = display.newSprite(sheet, sequenceData)
+  body:setSequence("idle")
+  body:play()
+
+  local turet = Turet:newTuret(scene, body, type, x, y, direction, stats)
   turet.t = {}
   turet.isTuretNear = false
 
@@ -250,7 +390,8 @@ function Turet:newRangerTuret(scene, type, x, y, direction, stats)
   function turet.t:timer(event)
     if (turet.isDragging) then return end
     local bullet = Turet:newBullet(scene, turet)
-
+    body:setSequence("attack")
+    body:play()
     --turet:setLinearVelocity(turet.direction*20, 0)
   end
 
@@ -270,19 +411,19 @@ function Turet:newRangerTuret(scene, type, x, y, direction, stats)
     end
   end
 
-  function turet:delete()
-    turet.healthBar:die()
-    timer.cancel(turet.t)
-    print('timer removed')
-    display.remove(turet)
-    -- Remove the turet
-    for i=1, #scene.turets do
-      if (scene.turets[i] == turet) then
-        table.remove(scene.turets, i)
-      break
-      end
-    end
-  end
+  -- function turet:delete()
+  --   turet.healthBar:die()
+  --   timer.cancel(turet.t)
+  --   print('timer removed')
+  --   display.remove(turet)
+  --   -- Remove the turet
+  --   for i=1, #scene.turets do
+  --     if (scene.turets[i] == turet) then
+  --       table.remove(scene.turets, i)
+  --     break
+  --     end
+  --   end
+  -- end
 
   turet:construct()
 
@@ -294,7 +435,28 @@ end
 -- NOTE: This is not true inheritance.  Constructors will have to
 -- be re-invoked, but all other function can be called and overriden.
 function Turet:newSupportTuret(scene, type, x, y, direction, stats)
-  local turet = Turet:newTuret(scene, type, x, y, direction, stats)
+  local sheet = graphics.newImageSheet("images/healer.png", { width = 51, height=64, numFrames=4 })
+  local sequenceData = {
+    {
+      name = "idle",
+      start = 1,
+      count = 1,
+      time= 1000,
+      loopCount = 0
+    },
+    {
+      name = "heal",
+      start = 1,
+      count = 3,
+      time= 300,
+      loopCount = 3
+    }
+  }
+  local body = display.newSprite(sheet, sequenceData)
+  body:setSequence("idle")
+  body:play()
+
+  local turet = Turet:newTuret(scene, body, type, x, y, direction, stats)
   turet.t = {}
   turet.isTuretNear = false
 
@@ -308,6 +470,9 @@ function Turet:newSupportTuret(scene, type, x, y, direction, stats)
 
     -- create a healing force field
     Turet:newHealField(scene, turet)
+    audio.play(Turet.healSound)
+    body:setSequence("heal")
+    body:play()
   end
 
   --- Represents the turet's behavior, which varies based
@@ -402,12 +567,13 @@ end
 --- Declare a Bullet "class"
 -- This will be fired by Ranger turets.
 function Turet:newBullet(scene, turet)
-  local bullet = display.newRect(0, 0, 16, 8)
+  local bullet = display.newRect(0, 0, 16, 4)
   bullet.name = "bullet"
   bullet.x = (turet.x+20*turet.direction)
   bullet.y = (turet.y-5)
   bullet.type = turet.type
   bullet.damage = turet.damage
+  audio.play(Turet.shootSound)
 
   function bullet:collision(event)
     if (event.other.name == bullet.name) then
@@ -419,9 +585,11 @@ function Turet:newBullet(scene, turet)
         if (event.other.name == "turet") then
           event.target:die()
           event.other:takeDamage(event.target.damage)
+          audio.play(Turet.hitSound)
         elseif (event.other.name == "tower") then
           event.target:die()
 	        event.other:takeDamage(event.target.damage)
+          audio.play(Turet.hitSound)
         end
       end
       return true
@@ -442,8 +610,8 @@ function Turet:newBullet(scene, turet)
 
   bullet:addEventListener("collision", bullet)
   physics.addBody(bullet, "dynamic", { density=1.0, friction=1, bounce=0.0, filter=turet.bulletFilter })
-  -- bullet.gravityScale = 0
-  bullet:applyForce(50*turet.direction, -15, bullet.x, bullet.y)
+  bullet.gravityScale = 0
+  bullet:applyForce(50*turet.direction, 0, bullet.x, bullet.y)
 
   Runtime:addEventListener("enterFrame", bullet)
 

@@ -22,14 +22,17 @@ local enemyMoney = levelData.startEnemyMoney
 local floorHeight = display.contentHeight/2
 local levelHeight = floorHeight * #levelData.floors
 
+local music = audio.loadStream("audio/bgm_game.wav")
+local musicStream
+local gameOverSound = audio.loadSound("audio/Game Over.wav")
+
 function scene:create( event )
 	local sceneGroup = self.view
 
 	-- Create the level
 	Game.levelMoney = levelData.startMoney
 
-	-- local music = audio.loadStream("audio/bgm_game.wav")
-	-- audio.play(music, {loops = -1})
+	musicStream = audio.play(music, {loops = -1})
 
 	self.gameView = display.newGroup()
 	physics.start()
@@ -165,6 +168,8 @@ function scene:destroy( event )
 		scene.objects[1]:die()
 	end
 
+
+
 	display.remove(scene.scrollView)
 	display.remove(scene.gameView)
 	display.remove(sceneGroup.gui)
@@ -196,7 +201,7 @@ function scene:newEnemy(x, y)
 	-- choose a random turet
 	local t = levelData.enemies[#levelData.enemies]
 
-	if (enemyMoney - t.deployCost >= 0) then		
+	if (enemyMoney - t.deployCost >= 0) then
 		local e = Turet:newTuretByClass(scene, t.class, "enemy", x, y, -1, t)
 		self.view.gui:toFront()
 		enemyMoney = enemyMoney - t.deployCost
@@ -252,7 +257,9 @@ end
 
 function scene:endGame(isWon)
 	if (not scene.isDone) then
-
+		audio.stop(musicStream)
+		audio.dispose(music)
+		music = nil
 		if (isWon) then
 			Game.levels[Game.currentLevel].isCleared = true
 			Game.money = Game.money + Game.levelMoney
@@ -281,6 +288,7 @@ function scene:endGame(isWon)
 
 			self.view:insert(btn)
 		else
+			audio.play(gameOverSound)
 			-- show a game over modal
 			local rektRect = display.newRect(-100,-100, 2000, 2000)
 			rektRect:setFillColor( 0, 0 , 0, 0.5 )
